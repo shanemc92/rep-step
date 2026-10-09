@@ -57,11 +57,12 @@ Panels are placed left to right. If the next panel will not fit in the row, the 
 
 ## Library
 
-108 starter exercises in ten categories: Kettlebell (39, including double-bell work, carries, Turkish get-up, snatch and windmill), Dumbbell, Barbell, Legs, Push, Pull, Core, Cardio, Stretch and Mobility. Filter by category or search by name. They live in `LIB_SRC` as plain angle objects, and `buildLib()` grounds and centres each one. To add an exercise, copy an entry and change the angles. Poses are approximations, so expect to nudge some in the editor. The least convincing are the floor poses (child's pose, sit-up, hollow and V-sit holds), side plank and step-up.
+125 starter exercises in ten categories: Kettlebell (46, including double-bell work, carries, Turkish get-up, snatch, windmill, halo, around the world, side swing and wood chop), Dumbbell, Barbell, Legs, Push, Pull, Core (with Pilates hundred and roll-up), Cardio, Stretch (with yoga poses such as downward dog, chair and tree) and Mobility (with thread the needle and deep squat). Filter by category or search by name. They live in `LIB_SRC` as plain angle objects, and `buildLib()` grounds and centres each one. To add an exercise, copy an entry and change the angles. Poses are approximations, so expect to nudge some in the editor. The least convincing are the floor poses (child's pose, sit-up, hollow and V-sit holds, knees to chest, thread the needle), side plank and step-up.
 
 ## Known gaps
 
 - Figures are flat 2D. There is no depth, so a front view and a side view are both just angles on the same skeleton.
+- The torso is one rigid bone, so poses that bend or twist the spine (cat-cow, spinal twists) cannot be drawn, and a kettlebell always sits in line with the forearm, so it cannot hang straight down from raised hands. High pull and upright row finish with the hands at the chest rather than touching the chin for that reason.
 - Posing is by dragging only. The dots have no keyboard control yet.
 - There is no undo. Reset pose and Copy previous pose are the way back.
 

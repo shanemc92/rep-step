@@ -2179,14 +2179,49 @@ const LIB_SRC = [
         P({ t: 120, h: 140, ra: -20, rf: -20, la: -60, lf: -60 }, LG.hinge),
         P({ t: 178, ra: 100, rf: 150, la: -60, lf: -60 }, LG.stand),
         P(LG.straight, AR.overR)] },
-    { id: "kb-high-pull", name: "High pull", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "16 kg", rest: "60 s" },
+    { id: "kb-high-pull", name: "High pull", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "16 kg", rest: "60 s", note: "Both hands on the bell, elbows lead" },
       props: [KB_B], poses: [
-        HINGE_K,
-        P({ t: 178, ra: 100, rf: 150, la: 98, lf: 148 }, LG.stand)] },
+        P(LG.stand, AR.down),
+        P({ ra: 115, rf: -25, la: 113, lf: -27 }, LG.stand),
+        P({ ra: 152, rf: -8, la: 150, lf: -10 }, LG.stand)] },
+    { id: "kb-upright-row", name: "Upright row", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s", note: "Elbows lead, bell stays close" },
+      props: [KB_B], poses: [
+        P(LG.stand, AR.down),
+        P({ ra: 152, rf: -8, la: 150, lf: -10 }, LG.stand)] },
     { id: "kb-row", name: "Kettlebell row", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "16 kg", rest: "60 s" },
       props: [KB_R], poses: [
         P({ t: 115, h: 140, ra: 5, rf: 5, la: 30, lf: 25 }, ROW_LEGS),
         P({ t: 115, h: 140, ra: -110, rf: 0, la: 30, lf: 25 }, ROW_LEGS)] },
+    { id: "kb-halo", name: "Halo", cat: "Kettlebell", def: { sets: "3", reps: "8 each way", weight: "8 kg", rest: "45 s", note: "Bell close to the head, ribs down" },
+      props: [KB_B], poses: [
+        P(LG.stand, AR.goblet),
+        P(LG.stand, { ra: 140, rf: 165, la: 138, lf: 163 }),
+        P(LG.stand, { ra: 150, rf: -78, la: 148, lf: -80 })] },
+    { id: "kb-around-world", name: "Around the world", cat: "Kettlebell", def: { sets: "3", reps: "8 each way", weight: "8 kg", rest: "45 s", note: "Pass it around the waist, tight" },
+      props: [KB_B], poses: [
+        P(LG.stand, { ra: 28, rf: 14, la: 26, lf: 12 }),
+        P(LG.stand, AR.down),
+        P(LG.stand, AR.back)] },
+    { id: "kb-side-swing", name: "Side swing", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "8 kg", rest: "45 s", note: "Hip to hip, arms long" },
+      props: [KB_B], poses: [
+        P({ t: 172, h: 176, ra: -65, rf: -65, la: -67, lf: -67 }, { rt: 12, rs: -8, lt: 10, ls: -10 }),
+        P({ t: 172, h: 176, ra: 8, rf: 8, la: 6, lf: 6 }, { rt: 12, rs: -8, lt: 10, ls: -10 }),
+        P({ t: 172, h: 176, ra: 65, rf: 65, la: 63, lf: 63 }, { rt: 12, rs: -8, lt: 10, ls: -10 })] },
+    { id: "kb-curl-turn", name: "Bicep curl and turn", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "8 kg", rest: "45 s", note: "Turn the torso to the side as you curl" },
+      props: [KB_B], poses: [
+        P(LG.stand, AR.down),
+        P(LG.stand, { ra: 6, rf: 95, la: 4, lf: 93 }),
+        P({ t: 170, h: 172 }, LG.stand, AR.goblet)] },
+    { id: "kb-front-raise", name: "Front goblet raise", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "8 kg", rest: "45 s", note: "Arms straight, to shoulder height" },
+      props: [KB_B], poses: [
+        P(LG.stand, AR.down),
+        P(LG.stand, { ra: 45, rf: 45, la: 43, lf: 43 }),
+        P(LG.stand, AR.fwd)] },
+    { id: "kb-wood-chop", name: "Wood chop", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "8 kg", rest: "45 s", note: "High to low, rotate through" },
+      props: [KB_B], poses: [
+        P({ t: 178, h: 172 }, LG.front, { ra: 158, rf: 158, la: 156, lf: 156 }),
+        P({ t: 165, h: 160 }, { rt: 20, rs: -6, lt: 16, ls: -8 }, { ra: 100, rf: 100, la: 98, lf: 98 }),
+        P({ t: 135, h: 130 }, { rt: 50, rs: -14, lt: 46, ls: -16 }, { ra: 15, rf: 10, la: 13, lf: 8 })] },
     { id: "kb-floor-press", name: "Floor press", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "16 kg", rest: "60 s" },
       props: [KB_R, MAT], poses: [
         P(LYING, LG.lying, { ra: 180, rf: 180, la: 90, lf: 90 }),
@@ -2397,6 +2432,13 @@ const LIB_SRC = [
         { t: -125, h: -120, rt: 108, rs: 108, lt: 105, ls: 105, ra: -120, rf: -120, la: -122, lf: -122, props: [MAT] }] },
     { id: "v-sit", name: "V-sit hold", cat: "Core", def: { sets: "3", time: "20 s", rest: "30 s" }, poses: [
         { t: -150, h: -155, rt: 130, rs: 130, lt: 126, ls: 126, ra: 95, rf: 95, la: 92, lf: 92, props: [MAT] }] },
+    { id: "pilates-hundred", name: "Pilates hundred", cat: "Core", def: { sets: "1", time: "50 s", rest: "30 s", note: "Pump the arms, breathe in 5 and out 5" }, poses: [
+        { t: -128, h: -122, rt: 135, rs: 135, lt: 133, ls: 133, ra: 82, rf: 82, la: 80, lf: 80, props: [MAT] },
+        { t: -128, h: -122, rt: 135, rs: 135, lt: 133, ls: 133, ra: 100, rf: 100, la: 98, lf: 98, props: [MAT] }] },
+    { id: "pilates-roll-up", name: "Roll-up", cat: "Core", def: { sets: "2", reps: "8", rest: "30 s", note: "Peel up one bone at a time" }, poses: [
+        P(LYING, { rt: 90, rs: 90, lt: 88, ls: 88, ra: -95, rf: -95, la: -97, lf: -97, props: [MAT] }),
+        P({ t: -140, h: -135, rt: 90, rs: 90, lt: 88, ls: 88, ra: 90, rf: 90, la: 88, lf: 88, props: [MAT] }),
+        P({ t: 100, h: 95, rt: 90, rs: 90, lt: 88, ls: 88, ra: 92, rf: 92, la: 90, lf: 90, props: [MAT] })] },
     { id: "mountain-climber", name: "Mountain climber", cat: "Core", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
         P({ props: [MAT] }, PLANK_UP, { rt: 62, rs: -35 }),
         P({ props: [MAT] }, PLANK_UP, { lt: 60, ls: -37 })] },
@@ -2453,6 +2495,18 @@ const LIB_SRC = [
         P(LG.stand, { ra: 178, rf: -25, la: 130, lf: 175 })] },
     { id: "chest-stretch", name: "Chest stretch", cat: "Stretch", def: { sets: "2", time: "20 s" }, poses: [
         P(LG.stand, { ra: -45, rf: -45, la: -48, lf: -48 })] },
+    { id: "downward-dog", name: "Downward dog", cat: "Stretch", def: { sets: "2", time: "30 s" }, poses: [
+        { t: 53, h: 28, rt: -28, rs: -28, lt: -26, ls: -26, ra: 53, rf: 53, la: 51, lf: 51, props: [MAT] }] },
+    { id: "chair-pose", name: "Chair pose", cat: "Stretch", def: { sets: "2", time: "20 s" }, poses: [
+        P({ t: 158, h: 165, rt: 62, rs: -20, lt: 58, ls: -22 }, { ra: 158, rf: 158, la: 156, lf: 156 })] },
+    { id: "tree-pose", name: "Tree pose", cat: "Stretch", def: { sets: "2", time: "20 s each side" }, poses: [
+        { rt: 3, rs: 3, lt: -70, ls: 65, ra: 163, rf: 163, la: 161, lf: 161 }] },
+    { id: "knees-to-chest", name: "Knees to chest", cat: "Stretch", def: { sets: "2", time: "30 s" }, poses: [
+        { t: -90, h: -90, rt: 165, rs: -120, lt: 163, ls: -122, ra: 151, rf: 151, la: 149, lf: 149, props: [MAT] }] },
+    { id: "lying-hamstring", name: "Lying hamstring stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side" }, poses: [
+        { t: -90, h: -90, rt: 175, rs: 175, lt: 88, ls: 88, ra: 109, rf: 109, la: 107, lf: 107, props: [MAT] }] },
+    { id: "calf-stretch", name: "Calf stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side" }, poses: [
+        { t: 148, h: 148, rt: -38, rs: -38, lt: 62, ls: -10, ra: 100, rf: 100, la: 98, lf: 98, props: [{ k: "wall", hand: true, ox: 6 }] }] },
 
     /* ---------- Mobility ---------- */
     { id: "arm-circles", name: "Arm circles", cat: "Mobility", def: { sets: "2", reps: "10 each way" }, poses: [
@@ -2461,7 +2515,12 @@ const LIB_SRC = [
         P(LG.front, { ra: 35, rf: 35, la: -35, lf: -35 })] },
     { id: "leg-swings", name: "Leg swings", cat: "Mobility", def: { sets: "2", reps: "10 each leg" }, poses: [
         { rt: 55, rs: 55, lt: -3, ls: -3, ra: 40, rf: 40, la: -30, lf: -30 },
-        { rt: -40, rs: -40, lt: -3, ls: -3, ra: 40, rf: 40, la: -30, lf: -30 }] }
+        { rt: -40, rs: -40, lt: -3, ls: -3, ra: 40, rf: 40, la: -30, lf: -30 }] },
+    { id: "thread-needle", name: "Thread the needle", cat: "Mobility", def: { sets: "2", reps: "8 each side", note: "Slide the arm under, turn the chest" }, poses: [
+        { t: 111, h: 100, rt: 0, rs: -90, lt: 2, ls: -90, ra: 0, rf: 0, la: 2, lf: 2, props: [MAT] },
+        { t: 62, h: 70, rt: 0, rs: -90, lt: 2, ls: -90, ra: -100, rf: -100, la: 82, lf: 82, props: [MAT] }] },
+    { id: "deep-squat", name: "Deep squat hold", cat: "Mobility", def: { sets: "2", time: "30 s", note: "Elbows press the knees out" }, poses: [
+        P({ t: 165, h: 170 }, LG.deep, AR.goblet)] },
 ];
 
 function buildLib() {
