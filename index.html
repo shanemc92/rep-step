@@ -1,0 +1,3126 @@
+<!DOCTYPE html>
+<html lang="en" data-design="cobalt" data-mode="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex, nofollow">
+<!-- Keep this in sync with _headers and .htaccess. Both policies apply when the
+     page is served, and the browser enforces the intersection, so widening one
+     without the other silently keeps the stricter rule.
+     frame-ancestors is deliberately NOT here: browsers ignore it in a meta tag
+     and log an error. It lives in the two header files only. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; base-uri 'none'; form-action 'none'">
+<title>rep-step</title>
+
+<style>
+
+/* ============================================================
+   rep-step
+
+   One stylesheet, three independent axes:
+
+     data-design  cobalt | chamfer | console | contour
+                  shape language, surface hue family, backdrop
+                  texture, ornament. This is the "look".
+
+     data-mode    dark | dusk | sepia | light
+                  the lightness ramp only. Every design supports
+                  every mode.
+
+     --ah / --ac  accent hue and chroma, set on <html> by the
+                  accent picker. Accent lightness comes from the
+                  mode, so a hue can never go invisible against
+                  the surface it sits on.
+
+   That is 16 palettes from eight small blocks, and no component
+   rule anywhere below knows which one is active.
+
+   Geometry is deliberately mode- and design-independent: every
+   design shares the same bar height, panel padding, control
+   padding, type sizes and grid. Designs may only change colour,
+   radius, clip-path, borders and absolutely-positioned ornament,
+   so switching design never reflows the page.
+
+   Sans for chrome and prose, mono for data. No webfonts, no
+   network calls, no build step.
+   ============================================================ */
+
+:root {
+    --wrap: 1080px;   /* content column */
+    --read: 760px;    /* prose column */
+    --ui:   system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+    /* Shared geometry. Do not re-declare these in a design block:
+       they are what keeps a design switch from moving content. */
+    --bar:      52px;   /* top bar height */
+    --pad:      18px;   /* panel padding */
+    --gap:      14px;   /* grid gap */
+    --ctl:      30px;   /* icon button / logo tile box */
+
+    /* Accent defaults, overwritten inline by the picker. */
+    --ah: 214;
+    --ac: 76%;
+}
+
+/* ============================================================
+   Designs: hue family per mode group, shape, ornament switches
+   ============================================================ */
+
+/* Navy editor chrome, accent rules. The house design. */
+html[data-design="cobalt"] {
+    --hd: 222; --sd: 30%;
+    --hw: 38;  --sw: 28%;
+    --hl: 216; --sl: 28%;
+    --radius: 6px;
+    --radius-sm: 4px;
+    --notch: 0px;
+    --notch-sm: 0px;
+}
+
+/* Cut corners, instrument grid. */
+html[data-design="chamfer"] {
+    --hd: 218; --sd: 20%;    /* dark + dusk surfaces */
+    --hw: 36;  --sw: 30%;    /* sepia surfaces */
+    --hl: 216; --sl: 14%;    /* light surfaces */
+    --radius: 0px;
+    --radius-sm: 4px;
+    --notch: 16px;
+    --notch-sm: 8px;
+}
+
+/* Square, graphite, hairline scan lines. The terminal remnant. */
+html[data-design="console"] {
+    --hd: 205; --sd: 9%;
+    --hw: 42;  --sw: 20%;
+    --hl: 210; --sl: 7%;
+    --radius: 0px;
+    --radius-sm: 0px;
+    --notch: 0px;
+    --notch-sm: 0px;
+}
+
+/* Soft radii, accent wash, no texture. The calm one. */
+html[data-design="contour"] {
+    --hd: 258; --sd: 22%;
+    --hw: 30;  --sw: 26%;
+    --hl: 250; --sl: 13%;
+    --radius: 14px;
+    --radius-sm: 9px;
+    --notch: 0px;
+    --notch-sm: 0px;
+}
+
+/* ============================================================
+   Modes: lightness ramp, accent band, status colours
+
+   --l-*  surface and text lightness stops
+   --al   accent lightness, chosen so any hue clears its surface
+   --ink  text that sits on top of the accent
+   ============================================================ */
+
+html[data-mode="dark"] {
+    color-scheme: dark;
+    --h: var(--hd); --s: var(--sd);
+    --l-bg: 7%;   --l-card: 10.5%; --l-sunken: 8.5%; --l-raised: 15%;
+    --l-line: 23%; --l-soft: 16%;
+    --l-fg: 93%;  --l-dim: 67%;   --l-faint: 54%;
+    --al: 66%; --soft: 0.15;
+    --ink: hsl(var(--ah) 60% 8%);
+    --sh: rgba(0, 0, 0, 0.55);
+    --shadow-lift: 0 20px 50px -20px rgba(0, 0, 0, 0.85);
+    --ok:   hsl(146 58% 55%);
+    --warn: hsl(41 86% 60%);
+    --bad:  hsl(5 85% 66%);
+    --ok-ink: hsl(146 60% 8%);
+}
+
+/* "Not as dark": same palette lifted off black, for rooms with
+   some light in them and for long sessions. */
+html[data-mode="dusk"] {
+    color-scheme: dark;
+    --h: var(--hd); --s: var(--sd);
+    --l-bg: 16%;  --l-card: 20%;  --l-sunken: 17.5%; --l-raised: 25%;
+    --l-line: 32%; --l-soft: 25%;
+    --l-fg: 95%;  --l-dim: 74%;   --l-faint: 62%;
+    --al: 68%; --soft: 0.17;
+    --ink: hsl(var(--ah) 60% 10%);
+    --sh: rgba(0, 0, 0, 0.42);
+    --shadow-lift: 0 20px 50px -20px rgba(0, 0, 0, 0.7);
+    --ok:   hsl(146 55% 58%);
+    --warn: hsl(41 82% 62%);
+    /* 72%, not 68%: btn-danger puts --bad on --raised, where 68% measured
+       3.96:1 and missed AA. This clears it at 4.51:1. */
+    --bad:  hsl(5 82% 72%);
+    --ok-ink: hsl(146 60% 9%);
+}
+
+/* Warm paper. Bright but low glare. */
+html[data-mode="sepia"] {
+    color-scheme: light;
+    --h: var(--hw); --s: var(--sw);
+    --l-bg: 87%;  --l-card: 95%;  --l-sunken: 91%; --l-raised: 98%;
+    --l-line: 72%; --l-soft: 82%;
+    --l-fg: 16%;  --l-dim: 36%;   --l-faint: 45%;
+    --al: 38%; --soft: 0.11;
+    --ink: hsl(var(--ah) 40% 98%);
+    --sh: rgba(70, 52, 18, 0.16);
+    --shadow-lift: 0 20px 50px -22px rgba(70, 52, 18, 0.3);
+    --ok:   hsl(150 52% 30%);
+    /* 33%, not 34%: btn-warn's hover puts --warn on --sunken, which measured
+       4.49:1 and missed AA by a hair. One point down clears it. */
+    --warn: hsl(32 78% 33%);
+    --bad:  hsl(2 68% 44%);
+    --ok-ink: hsl(40 40% 97%);
+}
+
+/* Cool white. The print-adjacent one. */
+html[data-mode="light"] {
+    color-scheme: light;
+    --h: var(--hl); --s: var(--sl);
+    --l-bg: 93%;  --l-card: 100%; --l-sunken: 96.5%; --l-raised: 99%;
+    --l-line: 84%; --l-soft: 90%;
+    --l-fg: 12%;  --l-dim: 37%;   --l-faint: 47%;
+    --al: 39%; --soft: 0.1;
+    --ink: hsl(var(--ah) 35% 99%);
+    --sh: rgba(16, 24, 40, 0.14);
+    --shadow-lift: 0 20px 50px -22px rgba(16, 24, 40, 0.26);
+    --ok:   hsl(150 54% 29%);
+    --warn: hsl(32 80% 33%);
+    --bad:  hsl(2 70% 45%);
+    --ok-ink: hsl(150 30% 99%);
+}
+
+/* ============================================================
+   The token layer. Everything below this point uses these and
+   nothing else. A literal colour in a component rule is a bug:
+   it will break in at least one of the sixteen combinations.
+   ============================================================ */
+html {
+    --bg:        hsl(var(--h) var(--s) var(--l-bg));
+    --card:      hsl(var(--h) var(--s) var(--l-card));
+    --sunken:    hsl(var(--h) var(--s) var(--l-sunken));
+    --raised:    hsl(var(--h) var(--s) var(--l-raised));
+    --line:      hsl(var(--h) calc(var(--s) * 0.85) var(--l-line));
+    --line-soft: hsl(var(--h) calc(var(--s) * 0.85) var(--l-soft));
+    --fg:        hsl(var(--h) calc(var(--s) * 0.30) var(--l-fg));
+    --fg-dim:    hsl(var(--h) calc(var(--s) * 0.35) var(--l-dim));
+    --fg-faint:  hsl(var(--h) calc(var(--s) * 0.35) var(--l-faint));
+
+    --accent:      hsl(var(--ah) var(--ac) var(--al));
+    --accent-soft: hsl(var(--ah) var(--ac) var(--al) / var(--soft));
+    --accent-ink:  var(--ink);
+
+    --toggle-on:  var(--ok);
+    --toggle-ink: var(--ok-ink);
+
+    --shadow: 0 1px 2px var(--sh);
+}
+/* Contour lifts its surfaces instead of outlining them. */
+html[data-design="contour"] {
+    --shadow: 0 1px 2px var(--sh), 0 18px 38px -26px var(--sh);
+}
+
+/* ============================================================
+   Base
+   ============================================================ */
+* { box-sizing: border-box; }
+/* Mobile WebKit/Chrome paint a translucent grey-blue overlay on tap by
+   default, gone by the time :active/:hover settle. Against a plain button
+   that reads as a faint flash; against a filled button (btn-primary) or a
+   coloured label (btn-danger, btn-warn) it reads as the button changing
+   colour on click. Not present in desktop testing, which is why it is easy
+   to miss. */
+* { -webkit-tap-highlight-color: transparent; }
+/* Chromium/WebKit synthesise a brief :hover match from a tap on touch
+   devices, with no mouse-leave to clear it, so a border or colour tied to
+   :hover can flash or stick after a tap that was never a real hover. Every
+   :hover rule below is gated to devices that can actually hover, so a tap
+   only ever produces the base and :active styles. Keep new ones gated too. */
+html { scrollbar-gutter: stable; }
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--ui);
+    font-size: 13.5px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Backdrop. One layer, four treatments, all built from tokens and
+   all pinned behind the content, so none of them can push a pixel. */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+/* Instrument grid: a worksheet under the readout. */
+html[data-design="chamfer"] body::before {
+    background-image:
+        linear-gradient(var(--line-soft) 1px, transparent 1px),
+        linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+    background-size: 28px 28px;
+    opacity: 0.4;
+}
+/* Scan rules: horizontal hairlines, close enough to read as a screen. */
+html[data-design="console"] body::before {
+    background-image: repeating-linear-gradient(180deg,
+        var(--line-soft) 0 1px, transparent 1px 6px);
+    opacity: 0.32;
+}
+/* A faint accent light falling from the top edge, like a lit screen. */
+html[data-design="cobalt"] body::before {
+    background-image: linear-gradient(180deg,
+        color-mix(in srgb, var(--accent) 9%, transparent), transparent 360px);
+    opacity: 1;
+}
+/* A single soft wash in the current accent, and nothing else. */
+html[data-design="contour"] body::before {
+    background-image: radial-gradient(880px 400px at 50% -190px,
+        var(--accent-soft), transparent 72%);
+    opacity: 1;
+}
+.topbar, .page, .footer, .notification { position: relative; z-index: 1; }
+
+h1, h2, h3 { margin: 0; font-weight: 600; }
+::selection { background: var(--accent); color: var(--accent-ink); }
+::placeholder { color: var(--fg-faint); opacity: 1; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+/* The chamfer. A clip-path, so it costs no space and the same box
+   is still the same box in every other design. */
+.chamfer, .chamfer-sm { border-radius: var(--radius); }
+html[data-design="chamfer"] .chamfer {
+    border-radius: 0;
+    clip-path: polygon(var(--notch) 0, 100% 0, 100% 100%, 0 100%, 0 var(--notch));
+}
+html[data-design="chamfer"] .chamfer-sm {
+    border-radius: 0;
+    clip-path: polygon(var(--notch-sm) 0, 100% 0, 100% 100%, 0 100%, 0 var(--notch-sm));
+}
+@media print {
+    .chamfer, .chamfer-sm { clip-path: none !important; border-radius: 3px; }
+}
+
+/* ============================================================
+   Top bar
+   ============================================================ */
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 40;
+    background: var(--card);
+    border-bottom: 1px solid var(--line);
+}
+/* Cobalt only: an accent hairline under the bar that fades out to the
+   right, so it reads as an edge and not a stripe. */
+html[data-design="cobalt"] .topbar::after {
+    content: "";
+    position: absolute;
+    left: 0; right: 0; bottom: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, var(--accent), transparent 75%);
+    opacity: 0.8;
+}
+/* Console only: the bar sits on a second hairline, like a rule under
+   a header in a terminal UI. Drawn as a shadow, so it takes no space. */
+html[data-design="console"] .topbar {
+    box-shadow: 0 3px 0 -1px var(--line-soft);
+}
+.topbar-inner {
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: var(--bar);
+}
+
+/* Terminal remnant: the name stays mono. No version here, it lives
+   in the footer where it does not compete with the mark. */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font);
+    font-size: 14px;
+    white-space: nowrap;
+}
+.brand .name { color: var(--fg); font-weight: 500; letter-spacing: 0.2px; }
+
+/* A lit indicator rather than a decoration: it breathes to say the tab
+   is alive, and its title is where the "runs local" claim actually
+   lives. Keep the claim true or remove the dot. */
+.pulse {
+    flex: 0 0 auto;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--ok);
+    box-shadow: 0 0 5px var(--ok);
+    animation: breathe 2.6s ease-in-out infinite;
+}
+@keyframes breathe {
+    0%, 100% { opacity: 0.3; }
+    50%      { opacity: 1; }
+}
+
+/* Logo slot. One mark, every design: only the frame around it changes,
+   and the box is a fixed 30px square in all four so the bar never
+   shifts. Swap the SVG for the tool's own mark, drawn with
+   currentColor on a 32x32 viewBox so it follows the accent. */
+.logo {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--ctl);
+    height: var(--ctl);
+    padding: 5px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    animation: logo-in 0.5s cubic-bezier(0.2, 0.7, 0.3, 1) both;
+}
+.logo svg, .logo img { display: block; width: 100%; height: 100%; }
+.logo img { object-fit: contain; }
+html[data-design="chamfer"] .logo {
+    border-radius: 0;
+    clip-path: polygon(8px 0, 100% 0, 100% 100%, 0 100%, 0 8px);
+}
+html[data-design="cobalt"] .logo { border-color: var(--accent); }
+html[data-design="contour"] .logo { border-radius: 50%; }
+@keyframes logo-in {
+    from { opacity: 0; transform: scale(0.75); }
+    to   { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) { .logo { animation: none; } }
+
+/* ---------- Tabs ---------- */
+.tabs { display: flex; gap: 2px; margin-left: auto; overflow-x: auto; scrollbar-width: none; }
+.tabs::-webkit-scrollbar { display: none; }
+.tab {
+    position: relative;
+    font: inherit;
+    font-size: 13px;
+    color: var(--fg-dim);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    padding: 6px 13px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: color 0.15s, background 0.15s;
+}
+@media (hover: hover) { .tab:hover { color: var(--fg); background: var(--sunken); } }
+.tab[aria-selected="true"] { color: var(--accent); }
+/* Underline for the two hard-edged designs, drawn on a pseudo element
+   so the selected tab is exactly as tall as the others. */
+.tab::after {
+    content: "";
+    position: absolute;
+    left: 13px; right: 13px; bottom: -1px;
+    height: 2px;
+    background: var(--accent);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.18s ease;
+}
+.tab[aria-selected="true"]::after { transform: scaleX(1); }
+html[data-design="console"] .tab[aria-selected="true"],
+html[data-design="contour"] .tab[aria-selected="true"] { background: var(--accent-soft); }
+html[data-design="console"] .tab::after,
+html[data-design="contour"] .tab::after { display: none; }
+html[data-design="contour"] .tab { border-radius: 999px; }
+/* Cobalt: the selected tab is a boxed chip, like a picker in a toolbar.
+   The border was already there, transparent, so nothing moves. */
+html[data-design="cobalt"] .tab[aria-selected="true"] {
+    color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+html[data-design="cobalt"] .tab::after { display: none; }
+
+/* ---------- Menus: design, mode, accent ---------- */
+.bar-tools { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
+.menu-wrap { position: relative; flex: 0 0 auto; }
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--ctl);
+    height: var(--ctl);
+    padding: 0;
+    color: var(--fg-dim);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+@media (hover: hover) { .icon-btn:hover { color: var(--accent); background: var(--sunken); border-color: var(--line); } }
+.icon-btn[aria-expanded="true"] { color: var(--accent); background: var(--accent-soft); border-color: var(--line); }
+.icon-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+
+.menu {
+    position: absolute;
+    top: 36px;
+    right: 0;
+    z-index: 60;
+    min-width: 208px;
+    padding: 6px;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lift);
+}
+.menu[hidden] { display: none; }
+.menu-title {
+    font-family: var(--font);
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    padding: 4px 8px 6px;
+}
+.opt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    font: inherit;
+    font-size: 13px;
+    text-align: left;
+    color: var(--fg);
+    background: transparent;
+    border: 0;
+    border-radius: 6px;
+    padding: 7px 9px;
+    cursor: pointer;
+}
+@media (hover: hover) { .opt:hover { background: var(--sunken); } }
+.opt[aria-checked="true"] { color: var(--accent); }
+.opt .lbl { display: flex; flex-direction: column; line-height: 1.3; }
+.opt .lbl small { color: var(--fg-faint); font-size: 11px; }
+.opt .tick { margin-left: auto; font-family: var(--font); font-size: 12px; opacity: 0; }
+.opt[aria-checked="true"] .tick { opacity: 1; }
+
+/* Design swatch: a 16px sample of that design's actual shape and
+   backdrop, so the menu shows what it is rather than naming it. */
+.dsw {
+    flex: 0 0 auto;
+    width: 16px; height: 16px;
+    background: var(--sunken);
+    border: 1px solid var(--fg-faint);
+}
+.opt[data-set="chamfer"] .dsw { clip-path: polygon(6px 0, 100% 0, 100% 100%, 0 100%, 0 6px); }
+.opt[data-set="console"] .dsw {
+    background-image: repeating-linear-gradient(180deg, var(--fg-faint) 0 1px, transparent 1px 4px);
+}
+.opt[data-set="cobalt"] .dsw {
+    border-radius: 3px;
+    background-image: linear-gradient(90deg, var(--fg-faint) 0 60%, transparent 60%);
+    background-size: 100% 1px;
+    background-repeat: no-repeat;
+    background-position: 0 4px;
+}
+.opt[data-set="contour"] .dsw { border-radius: 50%; }
+
+/* Mode swatch: the ramp itself, ink over paper. */
+.msw {
+    flex: 0 0 auto;
+    width: 16px; height: 16px;
+    border: 1px solid var(--fg-faint);
+    border-radius: 2px;
+}
+.opt[data-set="dark"]  .msw { background: linear-gradient(135deg, hsl(215 20% 46%) 50%, hsl(215 20% 7%) 50%); }
+.opt[data-set="dusk"]  .msw { background: linear-gradient(135deg, hsl(215 18% 62%) 50%, hsl(215 18% 20%) 50%); }
+.opt[data-set="sepia"] .msw { background: linear-gradient(135deg, hsl(36 28% 28%) 50%, hsl(36 30% 92%) 50%); }
+.opt[data-set="light"] .msw { background: linear-gradient(135deg, hsl(215 14% 30%) 50%, hsl(215 14% 100%) 50%); }
+
+/* Accent picker. The swatches are painted by the script using the
+   live formula, so each one previews the hue as the current mode
+   will actually render it. */
+.swatches {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+    padding: 4px 8px 8px;
+}
+.swatch {
+    height: 26px;
+    padding: 0;
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+@media (hover: hover) { .swatch:hover { transform: translateY(-1px); } }
+.swatch[aria-checked="true"] { box-shadow: 0 0 0 2px var(--card), 0 0 0 3px var(--fg); }
+/* The wheel replaces the browser's colour input. Hue is the angle and
+   chroma is the radius, which is the whole of what the accent takes
+   from a pick: lightness is the mode's job. The rim is drawn by the
+   script at the lightness the active mode will actually render, and
+   the middle fades into the surface underneath, so the control is a
+   preview of the palette rather than a generic spectrum. */
+.wheel-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 9px;
+    padding: 10px 8px 6px;
+    border-top: 1px solid var(--line-soft);
+}
+.wheel {
+    position: relative;
+    width: 116px;
+    height: 116px;
+    border-radius: 50%;
+    cursor: crosshair;
+    touch-action: none;
+    box-shadow: 0 0 0 1px var(--line);
+}
+.wheel::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 50% 50%, var(--card) 5%, transparent 64%);
+    pointer-events: none;
+}
+.wheel-dot {
+    position: absolute;
+    width: 13px; height: 13px;
+    margin: -6.5px 0 0 -6.5px;
+    border-radius: 50%;
+    border: 2px solid var(--card);
+    box-shadow: 0 0 0 1px var(--fg);
+    pointer-events: none;
+}
+.accent-foot {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    font-size: 12px;
+    color: var(--fg-dim);
+}
+.accent-foot .now { font-family: var(--font); color: var(--fg); }
+/* Kept alongside the wheel for the one case the wheel is bad at:
+   matching a brand colour exactly. */
+.hexin {
+    margin-left: auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-family: var(--font);
+    color: var(--fg-faint);
+}
+.hexin .field { width: 66px; padding: 4px 6px; font-size: 11.5px; }
+
+/* ============================================================
+   Page
+   ============================================================ */
+.page { width: 100%; max-width: var(--wrap); margin: 0 auto; padding: 22px 20px 34px; flex: 1 0 auto; }
+section[hidden] { display: none; }
+
+/* Terminal remnant: a mono status line under the bar. */
+.statusline {
+    font-family: var(--font);
+    font-size: 12px;
+    color: var(--fg-faint);
+    margin-bottom: 18px;
+}
+.statusline b { color: var(--fg-dim); font-weight: 500; }
+.statusline .chev { color: var(--accent); }
+
+.panel {
+    position: relative;
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: var(--pad);
+    margin-bottom: 16px;
+}
+html[data-design="chamfer"] .panel {
+    border-radius: 0;
+    clip-path: polygon(var(--notch) 0, 100% 0, 100% 100%, 0 100%, 0 var(--notch));
+}
+/* Console: an accent rule down the binding edge. Absolute, so the
+   18px of padding is still 18px. */
+html[data-design="console"] .panel::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 2px;
+    background: var(--accent);
+    opacity: 0.55;
+}
+/* Cobalt: a short accent rule on the top edge, like the marker on an
+   active editor tab. Sits on the border, never in the content. */
+html[data-design="cobalt"] .panel::before {
+    content: "";
+    position: absolute;
+    top: -1px; left: var(--pad);
+    width: 32px; height: 2px;
+    background: var(--accent);
+    border-radius: 0 0 2px 2px;
+}
+@media print { .panel { clip-path: none !important; } .panel::before { display: none; } }
+
+.panel-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--gap);
+    margin-bottom: var(--gap);
+}
+.panel-head h2 { font-size: 14.5px; }
+.panel-head .sub {
+    font-family: var(--font);
+    font-size: 11px;
+    color: var(--fg-faint);
+}
+.panel-head .sub::before { content: "["; }
+.panel-head .sub::after  { content: "]"; }
+.prose { max-width: var(--read); color: var(--fg-dim); text-align: left; }
+/* About is body copy in a full-width panel, so it is not held to the
+   reading measure the narrow in-panel notes use. */
+#pane-about .prose { max-width: none; }
+
+/* ============================================================
+   Controls
+   ============================================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    padding: 8px 14px;
+    font: inherit;
+    font-size: 13px;
+    color: var(--fg);
+    background: var(--raised);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+@media (hover: hover) { .btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); } }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.5; cursor: default; }
+@media (hover: hover) { .btn:disabled:hover { color: var(--fg); border-color: var(--line); background: var(--raised); } }
+
+.btn-primary {
+    color: var(--accent-ink);
+    background: var(--accent);
+    border-color: var(--accent);
+}
+@media (hover: hover) { .btn-primary:hover { color: var(--accent-ink); background: var(--accent); filter: brightness(1.08); } }
+html[data-design="chamfer"] .btn-primary {
+    border-radius: 0;
+    clip-path: polygon(var(--notch-sm) 0, 100% 0, 100% 100%, 0 100%, 0 var(--notch-sm));
+}
+html[data-design="contour"] .btn, html[data-design="contour"] .btn-primary { border-radius: 999px; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-ghost { background: transparent; border-color: transparent; color: var(--fg-dim); }
+@media (hover: hover) { .btn-ghost:hover { background: var(--sunken); border-color: var(--line); } }
+
+/* Destructive and cautionary buttons. Border and fill come from the base .btn
+   rule unchanged, same as every other button - only the label colour marks
+   them, so a row of buttons keeps one silhouette and the red is the only thing
+   that stands out. --bad and --warn are measured against every surface a button
+   actually sits on - --raised at rest, --sunken on hover, --card behind both -
+   in all four modes, and clear 4.5:1 (WCAG AA) on all of them. Two tokens were
+   nudged to make that true; see the notes in the dusk and sepia ramps. Use
+   btn-danger for anything that destroys data and btn-warn for
+   anything that is merely irreversible or leaks. Never use the accent for
+   either: it means interaction, not state.
+
+   These two must stay BELOW .btn-ghost. They carry the same specificity, so
+   whichever is written last wins, and the common case is a combination -
+   "btn btn-sm btn-ghost btn-danger" for a row's remove button. With the order
+   the other way round the ghost's --fg-dim quietly overrides the red and the
+   button looks like every other one. */
+.btn-danger { color: var(--bad); }
+@media (hover: hover) { .btn-danger:hover { color: var(--bad); border-color: var(--bad); background: var(--sunken); } }
+.btn-warn { color: var(--warn); }
+@media (hover: hover) { .btn-warn:hover { color: var(--warn); border-color: var(--warn); background: var(--sunken); } }
+
+/* ---------- Inputs: mono, because they hold data ---------- */
+.field {
+    width: 100%;
+    font-family: var(--font);
+    font-size: 12.5px;
+    color: var(--fg);
+    background: var(--sunken);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+    padding: 8px 10px;
+    outline: none;
+    transition: border-color 0.15s, background 0.15s;
+}
+@media (hover: hover) { .field:hover { border-color: var(--fg-faint); } }
+.field:focus { border-color: var(--accent); background: var(--card); }
+textarea.field { line-height: 1.6; resize: vertical; }
+select.field { cursor: pointer; }
+
+label.f {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--fg-dim);
+}
+
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: var(--gap); }
+.row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.spacer { flex: 1; }
+
+/* ---------- Toggles ---------- */
+.toggle-group { display: flex; flex-direction: column; gap: 12px; }
+.toggle-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 30px; }
+.toggle-label { font-size: 13px; color: var(--fg); }
+
+.toggle-switch {
+    position: relative;
+    flex: 0 0 auto;
+    width: 40px;
+    height: 22px;
+    border-radius: 11px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    cursor: pointer;
+    transition: background 0.18s, border-color 0.18s;
+}
+.toggle-switch::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--fg-faint);
+    transition: transform 0.18s, background 0.18s;
+}
+.toggle-switch.active { background: var(--toggle-on); border-color: var(--toggle-on); }
+.toggle-switch.active::after { transform: translateX(18px); background: var(--toggle-ink); }
+
+/* ---------- Drop zone ---------- */
+.drop {
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    padding: 24px 14px;
+    text-align: center;
+    color: var(--fg-dim);
+    background: var(--sunken);
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+html[data-design="chamfer"] .drop {
+    border-radius: 0;
+    clip-path: polygon(var(--notch) 0, 100% 0, 100% 100%, 0 100%, 0 var(--notch));
+}
+.drop.over { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); }
+@media (hover: hover) { .drop:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); } }
+.drop b { display: block; margin-bottom: 2px; color: var(--fg); font-weight: 500; }
+@media (hover: hover) { .drop:hover b { color: var(--accent); } }
+@media print { .drop { clip-path: none !important; } }
+
+/* ---------- Data text ---------- */
+pre {
+    margin: 0;
+    padding: 12px;
+    max-height: 340px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-word;
+    font-family: var(--font);
+    font-size: 12.5px;
+    line-height: 1.6;
+    background: var(--sunken);
+    border: 1px solid var(--line);
+    border-radius: var(--radius-sm);
+}
+code { font-family: var(--font); font-size: 12px; }
+mark { background: var(--accent-soft); color: var(--accent); border-radius: 3px; padding: 1px 3px; }
+.log { font-family: var(--font); font-size: 12px; color: var(--fg-dim); }
+.log .ok { color: var(--ok); } .log .warn { color: var(--warn); }
+.log .bad { color: var(--bad); } .log .a { color: var(--accent); }
+.note { font-size: 12px; line-height: 1.6; color: var(--fg-dim); }
+.note code { color: var(--accent); }
+
+.pill {
+    display: inline-flex;
+    align-items: center;
+    font-family: var(--font);
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    border: 1px solid var(--line);
+    color: var(--fg-dim);
+}
+.pill.ok { color: var(--ok); border-color: var(--ok); }
+.pill.warn { color: var(--warn); border-color: var(--warn); }
+.pill.bad { color: var(--bad); border-color: var(--bad); }
+
+/* ---------- Table ---------- */
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th {
+    text-align: left;
+    padding: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--fg-dim);
+    border-bottom: 1px solid var(--line);
+}
+/* Console: column heads read as a header row in a log, not a web table. */
+html[data-design="console"] th {
+    font-family: var(--font);
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+}
+td { padding: 6px 8px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+@media (hover: hover) { table tr:hover td { background: var(--sunken); } }
+td .field { padding: 5px 8px; }
+.empty {
+    padding: 28px;
+    text-align: center;
+    color: var(--fg-dim);
+    border: 1px dashed var(--line);
+    border-radius: var(--radius-sm);
+}
+
+/* ============================================================
+   Footer: where the version lives
+   ============================================================ */
+.footer {
+    width: 100%;
+    max-width: var(--wrap);
+    margin: 0 auto;
+    padding: 12px 20px 34px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-family: var(--font);
+    font-size: 11.5px;
+    color: var(--fg-faint);
+    border-top: 1px solid var(--line-soft);
+}
+.footer .sep { opacity: 0.5; }
+.footer .ver { color: var(--fg-dim); }
+.footer .right { margin-left: auto; }
+
+/* ============================================================
+   Notification
+   ============================================================ */
+.notification {
+    position: fixed;
+    left: 20px;
+    bottom: 20px;
+    z-index: 300;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    font-family: var(--font);
+    font-size: 12.5px;
+    color: var(--fg);
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-left: 2px solid var(--accent);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-lift);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateX(-6px);
+    transition: opacity 0.2s, transform 0.2s;
+}
+.notification::before { content: ">"; color: var(--accent); }
+.notification.show { opacity: 1; transform: translateX(0); }
+.notification.error { border-left-color: var(--bad); }
+.notification.error::before { content: "!"; color: var(--bad); }
+
+/* The toast follows the design like every other surface: it is the one
+   piece of chrome that appears over content, so a rounded pill floating
+   above a hard-edged page is exactly where the seam would show. It is
+   also the one element whose width is free to move, since it is fixed
+   to the corner and nothing reflows around it. */
+html[data-design="chamfer"] .notification {
+    border-radius: 0;
+    clip-path: polygon(var(--notch-sm) 0, 100% 0, 100% 100%, 0 100%, 0 var(--notch-sm));
+    /* the clip eats the left border, so the accent edge is redrawn inside it */
+    border-left-width: 1px;
+    box-shadow: inset 2px 0 0 var(--accent), var(--shadow-lift);
+}
+html[data-design="chamfer"] .notification.error {
+    box-shadow: inset 2px 0 0 var(--bad), var(--shadow-lift);
+}
+html[data-design="console"] .notification {
+    border-radius: 0;
+    border-left-width: 3px;
+}
+html[data-design="cobalt"] .notification {
+    border-left-color: var(--accent);
+}
+html[data-design="cobalt"] .notification::before { color: var(--accent); }
+html[data-design="cobalt"] .notification.error { border-left-color: var(--bad); }
+/* Contour has no prompt chevron anywhere else, so it gets a lit dot
+   instead: same 1ch of space, no reflow against the other designs. */
+html[data-design="contour"] .notification {
+    border-radius: 999px;
+    padding: 9px 16px;
+    border-left-width: 1px;
+    border-left-color: var(--line);
+}
+html[data-design="contour"] .notification::before {
+    content: "";
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    background: var(--accent);
+}
+html[data-design="contour"] .notification.error::before { background: var(--bad); }
+@media print { .notification { clip-path: none !important; } }
+
+/* ============================================================
+   Responsive
+   ============================================================ */
+@media (max-width: 760px) {
+    .topbar-inner { flex-wrap: wrap; gap: 10px; padding: 8px 14px; }
+    .tabs { order: 3; width: 100%; margin-left: 0; }
+    .bar-tools { margin-left: auto; }
+    .page { padding: 16px 14px 28px; }
+    .footer { padding: 12px 14px 28px; }
+    .panel { padding: 14px; }
+    .grid { grid-template-columns: 1fr; }
+    .menu { min-width: 190px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+    }
+}
+
+/* ============================================================
+   Print: one light palette for every design and mode
+   ============================================================ */
+@media print {
+    html, html[data-mode="dark"], html[data-mode="dusk"],
+    html[data-mode="sepia"], html[data-mode="light"] {
+        color-scheme: light;
+        --bg: #ffffff; --card: #ffffff; --sunken: #fafafa; --raised: #ffffff;
+        --line: #999999; --line-soft: #cccccc;
+        --fg: #111111; --fg-dim: #555555; --fg-faint: #777777;
+        --accent: #333333; --accent-soft: transparent; --accent-ink: #ffffff;
+        --shadow: none; --shadow-lift: none;
+    }
+    body::before { display: none !important; }
+    body { font-size: 11pt; }
+    .tabs, .bar-tools, .drop, .notification, .btn, .noprint { display: none !important; }
+    /* The bar survives as a masthead so the logo and name land on the page. */
+    .topbar { position: static; background: none; border-bottom: 1px solid #999; box-shadow: none; }
+    .topbar::after { display: none !important; }
+    .topbar-inner { max-width: none; padding: 0 0 8px; min-height: 0; }
+    .logo { color: #111; background: none; }
+    .page { max-width: none; padding: 0; }
+    .panel { border: none; padding: 0; margin-bottom: 18px; break-inside: avoid; page-break-inside: avoid; }
+    .footer { max-width: none; padding: 10px 0 0; }
+    section[hidden] { display: block !important; }
+    a[href]::after { content: " (" attr(href) ")"; font-size: 9pt; color: #555; }
+}
+
+/* ============================================================
+   rep-step
+   ============================================================ */
+.grid.tight { grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+.grid.tight .wide { grid-column: span 2; }
+label.f.grow { flex: 1 1 200px; }
+.spacer { flex: 1; }
+
+.studio {
+    display: grid;
+    grid-template-columns: minmax(260px, 360px) minmax(0, 1fr);
+    gap: var(--gap);
+    align-items: start;
+}
+.studio > .panel { margin-bottom: var(--gap); }
+@media (max-width: 900px) { .studio { grid-template-columns: minmax(0, 1fr); } }
+
+.btn.on { border-color: var(--accent); color: var(--accent); }
+.btn:disabled { opacity: 0.4; cursor: default; }
+
+/* Library */
+.lib {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
+    gap: 8px;
+    max-height: 640px;
+    overflow: auto;
+    margin-top: 12px;
+}
+.libitem {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 6px;
+    text-align: left;
+    color: var(--fg);
+    font: 12px/1.3 var(--ui);
+    background: var(--sunken);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+}
+@media (hover: hover) { .libitem:hover { border-color: var(--accent); } }
+.libitem:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.libitem svg { width: 100%; height: 56px; display: block; }
+.libname { font-weight: 600; }
+.libcat { font-family: var(--font); font-size: 10.5px; color: var(--fg-faint); }
+
+/* Editor */
+.edwrap {
+    display: grid;
+    grid-template-columns: minmax(220px, 440px) minmax(0, 1fr);
+    gap: var(--gap);
+    align-items: start;
+}
+@media (max-width: 700px) { .edwrap { grid-template-columns: minmax(0, 1fr); } }
+.edsvg {
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: block;
+    background: var(--sunken);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius-sm);
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.edtools { display: flex; flex-direction: column; gap: 12px; }
+.proprow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 12.5px;
+}
+
+/* Drawing: the figure takes its colours from whichever scope it sits in */
+.edsvg, .thumb { --ink: var(--fg); --paper: var(--card); --tint: var(--raised); --spot: var(--accent); }
+.thumb { --ink: var(--fg-dim); --paper: var(--sunken); }
+svg .ln { fill: none; stroke: var(--ink); stroke-width: 3.8; stroke-linecap: round; stroke-linejoin: round; }
+svg .ln.thin { stroke-width: 1.8; }
+svg .ln.mid { stroke-width: 2.6; }
+svg .ln.faint { opacity: 0.55; }
+svg .ln.pl { fill: var(--paper); }
+svg .ln.bl { fill: var(--tint); }
+svg .hd { fill: var(--paper); stroke: var(--ink); stroke-width: 3.4; }
+svg .solid { fill: var(--ink); stroke: none; }
+svg .bx { fill: var(--tint); stroke: var(--ink); stroke-width: 1.6; }
+svg .gl { stroke: var(--ink); stroke-width: 1.6; stroke-linecap: round; }
+svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: round; stroke-linejoin: round; }
+.edsvg .grid { stroke: var(--line-soft); stroke-width: 0.5; }
+.edsvg .h-hit { fill: transparent; cursor: grab; }
+.edsvg .h-hit:active { cursor: grabbing; }
+.edsvg .h-vis { pointer-events: none; stroke-width: 1.5; }
+.edsvg .h-vis.near { fill: var(--accent); stroke: var(--card); }
+.edsvg .h-vis.far { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
+.edsvg .h-vis.root { fill: var(--accent); stroke: var(--card); }
+.edsvg .h-vis.prop { fill: var(--warn); stroke: var(--card); }
+
+/* The sheet is paper. It is the product, so it keeps one fixed ink-on-white
+   palette in every design and mode, and the same in print. */
+.desk {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 14px;
+    background: var(--sunken);
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    margin-bottom: var(--gap);
+}
+.sheet {
+    --paper: #ffffff; --ink: #151515; --tint: #f1eee4; --note: #fff4bf; --spot: #c62828; --spot-ink: #ffffff;
+    box-sizing: border-box;
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    padding: calc(8mm * var(--k));
+    overflow: hidden;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--ui);
+    box-shadow: var(--shadow-lift);
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+}
+.sh-head {
+    display: flex;
+    align-items: baseline;
+    gap: calc(4mm * var(--k));
+    padding-bottom: calc(2mm * var(--k));
+    margin-bottom: calc(3mm * var(--k));
+    border-bottom: calc(1.2mm * var(--k)) solid var(--ink);
+}
+.sh-title { margin: 0; font-size: calc(10mm * var(--k)); font-weight: 900; line-height: 1; text-transform: uppercase; letter-spacing: 0.02em; color: var(--ink); }
+.sheet.cont .sh-title { font-size: calc(5.5mm * var(--k)); }
+.sh-sub { font-size: calc(4.8mm * var(--k)); font-weight: 600; }
+.sh-pg { margin-left: auto; font-family: var(--font); font-size: calc(3.6mm * var(--k)); }
+.sh-grid { flex: 1; min-height: 0; display: grid; gap: calc(3mm * var(--k)); }
+.cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--paper);
+    border: calc(0.9mm * var(--k)) solid var(--ink);
+    cursor: pointer;
+}
+.cell.sel { outline: calc(1.2mm * var(--k)) solid #1e88e5; outline-offset: calc(0.6mm * var(--k)); }
+.cell:focus-visible { outline: calc(1.2mm * var(--k)) solid #1e88e5; outline-offset: calc(0.6mm * var(--k)); }
+.cap { display: flex; align-items: stretch; font-size: calc(4.2mm * var(--k)); font-weight: 800; line-height: 1.1; text-transform: uppercase; }
+.cap .num { min-width: 1.8em; padding: 0.35em 0.6em; text-align: center; background: var(--spot); color: var(--spot-ink); }
+.cap .nm { flex: 1; min-width: 0; padding: 0.35em 0.7em; background: var(--tint); border-bottom: calc(0.5mm * var(--k)) solid var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell svg.strip { flex: 1 1 0; min-height: 0; width: 100%; display: block; }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: calc(1.6mm * var(--k)); padding: calc(1.4mm * var(--k)) calc(2mm * var(--k)); }
+.chip { padding: 0.1em 0.5em; font-size: calc(4.4mm * var(--k)); font-weight: 800; white-space: nowrap; background: var(--paper); border: calc(0.5mm * var(--k)) solid var(--ink); border-radius: calc(1mm * var(--k)); }
+.chip.main { font-size: calc(5.4mm * var(--k)); background: var(--spot); color: var(--spot-ink); border-color: var(--spot); }
+.cnote { padding: calc(1.2mm * var(--k)) calc(2mm * var(--k)); font-size: calc(3.6mm * var(--k)); font-style: italic; line-height: 1.25; background: var(--note); border-top: calc(0.5mm * var(--k)) solid var(--ink); }
+
+@media print {
+    html, body { background: #ffffff !important; }
+    .topbar, .statusline, .footer, .studio, #pane-about { display: none !important; }
+    .desk { display: block; padding: 0; margin: 0; background: none; border: none; border-radius: 0; }
+    .sheet { zoom: 1 !important; margin: 0; box-shadow: none; break-after: page; page-break-after: always; }
+    .sheet:last-child { break-after: auto; page-break-after: auto; }
+    .cell.sel { outline: none; }
+}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="topbar-inner">
+        <div class="brand">
+            <span class="logo" aria-hidden="true">
+                <!-- LOGO: a stick figure mid-move. currentColor, 32x32, also the favicon. -->
+                <svg viewBox="0 0 32 32">
+                    <circle cx="16" cy="7" r="3.4" fill="none" stroke="currentColor" stroke-width="2.4"/>
+                    <path d="M16 11v9M16 14l-6.5 4.5M16 14l6-7M16 20l-5.5 8.5M16 20l6 8.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </span>
+            <span class="name">rep-step</span>
+            <span class="pulse" title="Runs entirely in this tab. Nothing is uploaded."></span>
+        </div>
+
+        <nav class="tabs" role="tablist">
+            <button class="tab" id="tab-work" role="tab" aria-selected="true" aria-controls="pane-work">Plan</button>
+            <button class="tab" id="tab-about" role="tab" aria-selected="false" aria-controls="pane-about">About</button>
+        </nav>
+
+        <div class="bar-tools">
+
+            <!-- Design -->
+            <div class="menu-wrap">
+                <button class="icon-btn" id="designBtn" type="button" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Design" title="Design">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M4 9V4h5"></path><path d="M20 15v5h-5"></path>
+                        <rect x="4" y="9" width="16" height="11"></rect>
+                    </svg>
+                </button>
+                <div class="menu" id="designMenu" role="menu" hidden>
+                    <div class="menu-title">Design</div>
+                    <button class="opt" role="menuitemradio" aria-checked="false" data-set="cobalt">
+                        <span class="dsw" aria-hidden="true"></span>
+                        <span class="lbl">Cobalt<small>navy chrome, accent rules, soft corners</small></span>
+                        <span class="tick" aria-hidden="true">&check;</span>
+                    </button>
+                    <button class="opt" role="menuitemradio" aria-checked="false" data-set="chamfer">
+                        <span class="dsw" aria-hidden="true"></span>
+                        <span class="lbl">Chamfer<small>cut corners, instrument grid</small></span>
+                        <span class="tick" aria-hidden="true">&check;</span>
+                    </button>
+                    <button class="opt" role="menuitemradio" aria-checked="false" data-set="console">
+                        <span class="dsw" aria-hidden="true"></span>
+                        <span class="lbl">Console<small>square, graphite, scan rules</small></span>
+                        <span class="tick" aria-hidden="true">&check;</span>
+                    </button>
+                    <button class="opt" role="menuitemradio" aria-checked="false" data-set="contour">
+                        <span class="dsw" aria-hidden="true"></span>
+                        <span class="lbl">Contour<small>soft radii, accent wash</small></span>
+                        <span class="tick" aria-hidden="true">&check;</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mode -->
+            <div class="menu-wrap">
+                <button class="icon-btn" id="modeBtn" type="button" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Mode" title="Mode">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor" stroke="none"></path>
+                    </svg>
+                </button>
+                <div class="menu" id="modeMenu" role="menu" hidden>
+                    <div class="menu-title">Mode</div>
+                    <button class="opt" role="menuitemradio" aria-checked="false" data-set="dark">
+                        <span class="msw" aria-hidden="true"></span>
+                        <span class="lbl">Dark<small>default, lights off</small></span>
+                        <span class="tick" aria-hidden="true">&check;</span>
+                    </button>
+                    <button class="opt" role="menuitemradio" aria-checked="false" data-set="dusk">
+                        <span class="msw" aria-hidden="true"></span>
+                        <span class="lbl">Dusk<small>dark, lifted off black</small></span>
+                        <span class="tick" aria-hidden="true">&check;</span>
+                    </button>
+                    <button class="opt" role="menuitemradio" aria-checked="false" data-set="sepia">
+                        <span class="msw" aria-hidden="true"></span>
+                        <span class="lbl">Sepia<small>warm paper, low glare</small></span>
+                        <span class="tick" aria-hidden="true">&check;</span>
+                    </button>
+                    <button class="opt" role="menuitemradio" aria-checked="false" data-set="light">
+                        <span class="msw" aria-hidden="true"></span>
+                        <span class="lbl">Light<small>cool white</small></span>
+                        <span class="tick" aria-hidden="true">&check;</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Accent -->
+            <div class="menu-wrap">
+                <button class="icon-btn" id="accentBtn" type="button" aria-haspopup="true" aria-expanded="false"
+                        aria-label="Accent colour" title="Accent colour">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <circle cx="12" cy="12" r="9"></circle>
+                        <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none"></circle>
+                    </svg>
+                </button>
+                <div class="menu" id="accentMenu" role="menu" hidden>
+                    <div class="menu-title">Accent</div>
+                    <div class="swatches" id="swatches"></div>
+                    <div class="wheel-wrap">
+                        <div class="wheel" id="wheel" tabindex="0" role="slider"
+                             aria-label="Accent colour wheel. Left and right change hue, up and down change intensity."
+                             aria-valuemin="0" aria-valuemax="359" aria-valuenow="214" aria-valuetext="Azure">
+                            <span class="wheel-dot" id="wheelDot" aria-hidden="true"></span>
+                        </div>
+                        <div class="accent-foot">
+                            <span>Accent: <span class="now" id="accentNow">Azure</span></span>
+                            <label class="hexin" title="Match a brand colour exactly. The lightness is still set per mode.">#<input
+                                type="text" class="field" id="accentHex" maxlength="7" placeholder="2ec4b6"
+                                spellcheck="false" autocomplete="off" aria-label="Accent colour as hex"></label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</header>
+
+<main class="page">
+
+    <div class="statusline">~/rep-step <span class="chev">&gt;</span> <b>build a workout as a comic strip of stick figures</b>, print it to PDF, runs in your browser, nothing is uploaded</div>
+
+    <section id="pane-work" role="tabpanel" aria-labelledby="tab-work">
+
+        <div class="panel noprint">
+            <div class="row">
+                <button class="btn" id="btnLoad">Load JSON</button>
+                <button class="btn" id="btnSave">Save JSON</button>
+                <button class="btn btn-primary" id="btnPrint">Print / save as PDF</button>
+                <div class="spacer"></div>
+                <button class="btn btn-ghost btn-danger" id="btnReset">Reset</button>
+            </div>
+            <input type="file" id="fileIn" accept=".json,application/json" hidden>
+            <div class="note" style="margin-top:10px">Ctrl+S saves, Ctrl+O loads. Work is kept in this browser until you reset. For the PDF, choose Save as PDF in the print dialog, and leave margins and scale on their defaults.</div>
+        </div>
+
+        <div class="panel noprint">
+            <div class="panel-head">
+                <h2>Sheet</h2>
+                <span class="sub">title and layout</span>
+            </div>
+            <div class="grid tight">
+                <label class="f">Title<input type="text" class="field" id="mTitle" maxlength="80" placeholder="Workout A"></label>
+                <label class="f">Subtitle<input type="text" class="field" id="mSub" maxlength="120" placeholder="Full body, 30 minutes"></label>
+                <label class="f">Paper<select class="field" id="lPaper"></select></label>
+                <label class="f">Orientation<select class="field" id="lOrient"><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></label>
+                <label class="f">Columns<input type="number" class="field" id="lCols" min="1" max="6" step="1"></label>
+                <label class="f">Rows per page<input type="number" class="field" id="lRows" min="1" max="4" step="1"></label>
+                <label class="f">Accent ink<select class="field" id="lSpot"></select></label>
+            </div>
+        </div>
+
+        <div class="studio noprint">
+            <div class="panel">
+                <div class="panel-head">
+                    <h2>Exercise library</h2>
+                    <span class="sub" id="libCount"></span>
+                </div>
+                <div class="row">
+                    <label class="f grow">Category<select class="field" id="libCat"></select></label>
+                    <label class="f grow">Search<input type="search" class="field" id="libQ" maxlength="40" placeholder="swing, press, carry"></label>
+                </div>
+                <div class="lib" id="lib"></div>
+                <div class="row" style="margin-top:12px">
+                    <button class="btn btn-sm" id="btnBlank">Add blank panel</button>
+                </div>
+            </div>
+
+            <div class="panel" id="edPanel">
+                <div class="panel-head">
+                    <h2>Panel editor</h2>
+                    <span class="sub" id="edSub">none selected</span>
+                </div>
+                <div id="edEmpty" class="note">No panels yet. Pick an exercise from the library, or add a blank panel.</div>
+                <div id="edBody" hidden>
+                    <div class="row" style="margin-bottom:12px">
+                        <button class="btn btn-sm" id="pPrev">Previous</button>
+                        <button class="btn btn-sm" id="pNext">Next</button>
+                        <button class="btn btn-sm" id="pUp">Move earlier</button>
+                        <button class="btn btn-sm" id="pDown">Move later</button>
+                        <button class="btn btn-sm" id="pDup">Duplicate</button>
+                        <div class="spacer"></div>
+                        <button class="btn btn-sm btn-ghost btn-danger" id="pDel">Delete panel</button>
+                    </div>
+                    <div class="grid tight">
+                        <label class="f wide">Exercise<input type="text" class="field" id="fName" maxlength="60"></label>
+                        <label class="f">Sets<input type="text" class="field" id="fSets" maxlength="8" placeholder="3"></label>
+                        <label class="f">Reps<input type="text" class="field" id="fReps" maxlength="24" placeholder="12"></label>
+                        <label class="f">Time<input type="text" class="field" id="fTime" maxlength="24" placeholder="45 s"></label>
+                        <label class="f">Weight<input type="text" class="field" id="fWeight" maxlength="24" placeholder="16 kg"></label>
+                        <label class="f">Rest<input type="text" class="field" id="fRest" maxlength="24" placeholder="60 s"></label>
+                        <label class="f wide">Note<input type="text" class="field" id="fNote" maxlength="140" placeholder="Keep the back flat"></label>
+                    </div>
+
+                    <div class="row" id="poseTabs" role="group" aria-label="Poses in this panel" style="margin:16px 0 10px"></div>
+                    <div class="edwrap">
+                        <svg id="edSvg" class="edsvg" viewBox="0 0 160 160" role="img" aria-label="Pose editor. Drag the dots to pose the figure."><g id="edG"></g></svg>
+                        <div class="edtools">
+                            <div class="row">
+                                <button class="btn btn-sm" id="poseMirror">Mirror</button>
+                                <button class="btn btn-sm" id="poseGround">Centre and ground</button>
+                                <button class="btn btn-sm" id="poseReset">Reset pose</button>
+                            </div>
+                            <div class="row">
+                                <button class="btn btn-sm" id="poseCopy">Copy previous pose</button>
+                                <button class="btn btn-sm" id="poseAdd">Add pose</button>
+                                <button class="btn btn-sm btn-ghost btn-danger" id="poseDel">Remove pose</button>
+                            </div>
+                            <div class="toggle-item" style="gap:8px">
+                                <span class="toggle-label">Ground line</span>
+                                <div class="toggle-switch" id="tgGround" role="switch" aria-checked="true" tabindex="0" aria-label="Draw a ground line"></div>
+                            </div>
+                            <div class="row">
+                                <select class="field" id="propSel" aria-label="Prop to add"></select>
+                                <button class="btn btn-sm" id="propAdd">Add prop</button>
+                            </div>
+                            <div id="propList"></div>
+                            <div class="note">Drag the dots to pose the figure. Filled dots are the near limbs, hollow dots the far ones. The square dot moves the whole figure. Hold Shift to snap to 15 degrees.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel noprint">
+            <div class="panel-head">
+                <h2>Strip preview</h2>
+                <span class="sub" id="pageInfo"></span>
+            </div>
+            <div class="note">This is what prints. Click a panel to edit it. Panels with 2 or 3 poses take 2 or 3 columns.</div>
+        </div>
+        <div class="desk" id="sheets"></div>
+        <style id="pageStyle"></style>
+
+    </section>
+
+    <section id="pane-about" role="tabpanel" aria-labelledby="tab-about" hidden>
+        <div class="panel">
+            <div class="panel-head"><h2>About</h2></div>
+            <div class="prose">
+                Builds a workout as a comic strip of stick figures, for printing and sticking on a wall. Each
+                panel is one exercise with one, two or three poses, plus sets, reps, time, weight and rest.
+                Start from a preset in the library and adjust it, or pose a figure from scratch.
+                Everything runs in this tab. There is no network call and no analytics.
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>Posing</h2><span class="sub">how the figure works</span></div>
+            <div class="prose">
+                Bones have fixed lengths, so a figure always looks like the same person. Dragging a joint
+                turns the bone above it around its parent, and everything below keeps its own angle, so
+                pulling an elbow moves the hand with it. Figures are flat, side or front view as you
+                choose to draw them. Near limbs are drawn solid and far limbs lighter.
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>Printing to PDF</h2></div>
+            <div class="prose">
+                Use Print, then choose Save as PDF as the destination. The page size and orientation come
+                from the Sheet settings, margins are set to none by the page itself, and the preview is
+                what you get. If colours go missing, turn on background graphics in the print dialog.
+                The PDF is vector, so it stays sharp at A3.
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>Saving</h2></div>
+            <div class="prose">
+                Save JSON writes the whole plan to a file you can load again. The plan is also kept in this
+                browser automatically. Loaded files are checked and cleaned before use, so a damaged file
+                cannot put the tool into a bad state.
+            </div>
+        </div>
+        <div class="panel">
+            <div class="panel-head"><h2>Appearance</h2><span class="sub">design, mode, accent</span></div>
+            <div class="prose">
+                Three controls in the top bar, saved between visits. They change this tool only, never
+                the printed sheet, which is always dark ink on white.
+            </div>
+        </div>
+    </section>
+
+</main>
+
+<footer class="footer">
+    <span>rep-step</span>
+    <span class="ver" id="footVer">v1.0.0</span>
+    <span class="sep">&middot;</span>
+    <span>MIT</span>
+    <span class="sep">&middot;</span>
+    <span>github.com/shanemc92/rep-step</span>
+    <span class="right">no network calls, no analytics</span>
+</footer>
+
+<div class="notification" id="notification" role="status" aria-live="polite"></div>
+
+<script>
+"use strict";
+
+/* ---------- app identity ---------- */
+const APP = { id: "rep-step", version: "0.2.0", schema: 1 };
+
+/* ---------- dom helpers ---------- */
+const $  = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const el = (tag, cls, txt) => {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (txt != null) n.textContent = txt;
+    return n;
+};
+const esc = s => String(s).replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+const today = () => new Date().toISOString().slice(0, 10);
+
+/* ---------- storage (file:// and private mode safe) ---------- */
+const store = {
+    get(k)   { try { return localStorage.getItem(APP.id + ":" + k); } catch (e) { return null; } },
+    set(k,v) { try { localStorage.setItem(APP.id + ":" + k, v); return true; } catch (e) { return false; } },
+    del(k)   { try { localStorage.removeItem(APP.id + ":" + k); } catch (e) {} }
+};
+
+/* ---------- notification ---------- */
+let notifyT;
+function notify(msg, isError) {
+    const n = $("#notification");
+    n.textContent = msg;
+    n.classList.toggle("error", !!isError);
+    n.classList.add("show");
+    clearTimeout(notifyT);
+    notifyT = setTimeout(() => n.classList.remove("show"), 2200);
+}
+
+/* ============================================================
+   Appearance: design x mode x accent
+
+   Each axis is one data attribute or one pair of custom properties
+   on <html>, and each is stored separately, so a design change never
+   resets the mode and neither touches the accent.
+   ============================================================ */
+const root = document.documentElement;
+
+const DESIGNS = ["cobalt", "chamfer", "console", "contour"];
+const MODES   = ["dark", "dusk", "sepia", "light"];
+
+/* Hue plus chroma. Kept clear of the green, amber and red that --ok,
+   --warn and --bad occupy, so the accent can never be read as state. */
+const ACCENTS = [
+    { id: "teal",   name: "Teal",   h: 178, c: 68 },
+    { id: "cyan",   name: "Cyan",   h: 196, c: 72 },
+    { id: "azure",  name: "Azure",  h: 214, c: 76 },
+    { id: "indigo", name: "Indigo", h: 248, c: 70 },
+    { id: "violet", name: "Violet", h: 276, c: 64 },
+    { id: "orchid", name: "Orchid", h: 302, c: 58 },
+    { id: "rose",   name: "Rose",   h: 340, c: 66 },
+    { id: "slate",  name: "Slate",  h: 210, c: 18 }
+];
+
+/* Azure suits the default cobalt design. */
+const DEFAULT_ACCENT = ACCENTS.find(a => a.id === "azure");
+
+let accent = { h: DEFAULT_ACCENT.h, c: DEFAULT_ACCENT.c, name: DEFAULT_ACCENT.name };
+
+/* ---------- keeping an arbitrary hue readable ----------
+   HSL lightness is not perceptual: hsl(178 68% 40%) and
+   hsl(248 68% 40%) are nowhere near the same brightness, so a fixed
+   per-mode lightness leaves a teal accent washed out on white while
+   an indigo one is fine. The mode still sets the lightness it wants,
+   but it is treated as a starting point: the accent is then walked
+   away from the surface until it clears a real contrast ratio,
+   measured against the surfaces it actually sits on. That is what
+   makes any colour from the picker safe, including a near-white or
+   near-black one, and why no accented label can go invisible. */
+const TARGET = 4.6;
+
+const srgb = u => (u <= 0.03928 ? u / 12.92 : Math.pow((u + 0.055) / 1.055, 2.4));
+const lum = c => 0.2126 * srgb(c[0]) + 0.7152 * srgb(c[1]) + 0.0722 * srgb(c[2]);
+function ratio(a, b) {
+    const x = lum(a), y = lum(b);
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+}
+function hslRgb(h, s, l) {
+    s /= 100; l /= 100;
+    const k = n => (n + h / 30) % 12;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => l - a * Math.max(-1, Math.min(Math.min(k(n) - 3, 9 - k(n)), 1));
+    return [f(0), f(8), f(4)];
+}
+/* Read the resolved colour off a real element rather than parsing the
+   token: the browser has already substituted every variable. */
+function surfaceOf(node) {
+    const m = /(\d+(?:\.\d+)?)[,\s]+(\d+(?:\.\d+)?)[,\s]+(\d+(?:\.\d+)?)/
+        .exec(getComputedStyle(node).backgroundColor || "");
+    return m ? [m[1] / 255, m[2] / 255, m[3] / 255] : null;
+}
+function surfaces() {
+    const out = [];
+    const p = $(".panel"), b = document.body;
+    [p, b].forEach(n => { const c = n && surfaceOf(n); if (c) out.push(c); });
+    return out.length ? out : [[0, 0, 0]];
+}
+const worst = (h, c, l, surf) => Math.min.apply(null, surf.map(s => ratio(hslRgb(h, c, l), s)));
+
+/* The mode's --al, used as the preference to start from. */
+function baseL() {
+    const v = parseFloat(getComputedStyle(root).getPropertyValue("--al"));
+    return isFinite(v) ? v : 66;
+}
+function tuneL(h, c, surf) {
+    const base = baseL();
+    if (worst(h, c, base, surf) >= TARGET) return base;
+    const dir = lum(surf[0]) > 0.35 ? -1 : 1;   /* away from the surface */
+    for (let l = base; l >= 6 && l <= 96; l += dir * 1.5) {
+        if (worst(h, c, l, surf) >= TARGET) return Math.round(l * 10) / 10;
+    }
+    return dir < 0 ? 14 : 94;
+}
+const accentCss = (h, c, l) => "hsl(" + h + " " + c + "% " + l + "%)";
+
+function applyAccent(a, save) {
+    accent = { h: a.h, c: a.c, name: a.name || ("H" + Math.round(a.h)) };
+    root.style.setProperty("--ah", String(accent.h));
+    root.style.setProperty("--ac", accent.c + "%");
+    $("#accentNow").textContent = accent.name;
+    tuneAccent();
+    if (save && !store.set("accent", JSON.stringify(accent))) sessionOnly();
+}
+
+/* Sets the accent lightness, and the ink that goes on top of it, from
+   measurement rather than assumption. Called on accent change and on
+   every mode change, since the surface underneath has just moved. */
+function tuneAccent() {
+    const surf = surfaces();
+    /* --al is cleared first so baseL() reads the mode's value, not the
+       one tuned for the previous mode. */
+    root.style.removeProperty("--al");
+    const l = tuneL(accent.h, accent.c, surf);
+    root.style.setProperty("--al", l + "%");
+
+    const acc = hslRgb(accent.h, accent.c, l);
+    const pale = hslRgb(accent.h, 30, 98), deep = hslRgb(accent.h, 55, 9);
+    root.style.setProperty("--ink",
+        ratio(pale, acc) >= ratio(deep, acc) ? accentCss(accent.h, 30, 98) : accentCss(accent.h, 55, 9));
+
+    paintSwatches(surf);
+    paintWheel(surf);
+    paintFavicon();
+}
+
+/* Favicon. The .logo mark is the only source: it is serialised, currentColor
+   is swapped for the live tuned accent, and it is set on a <link rel="icon">
+   as a data: URI (covered by img-src data:). A standalone SVG has no parent
+   to inherit currentColor from, so left as-is it would draw black on a dark
+   tab. The mark is drawn bare, with no tile behind it. Re-run on accent and
+   mode change. The link is created here, not in the markup, so there is no
+   second copy of the mark to keep in sync and no /favicon.ico request to
+   fail. */
+function paintFavicon() {
+    const svg = $(".logo svg");
+    const l = parseFloat(root.style.getPropertyValue("--al"));
+    if (!svg || !isFinite(l)) return;
+    const rgb = c => "rgb(" + c.map(v => Math.round(v * 255)).join(",") + ")";
+    const mark = new XMLSerializer().serializeToString(svg)
+        .replace(/^<svg[^>]*>|<\/svg>$/g, "")
+        .replace(/currentColor/g, rgb(hslRgb(accent.h, accent.c, l)));
+    const doc = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">' +
+        mark + '</svg>';
+    let link = $('link[rel="icon"]');
+    if (!link) {
+        link = el("link");
+        link.rel = "icon";
+        link.type = "image/svg+xml";
+        document.head.appendChild(link);
+    }
+    link.href = "data:image/svg+xml," + encodeURIComponent(doc);
+}
+
+/* The rim is 24 stops of the same tuned colour the page would use, so
+   the wheel shifts with the mode instead of lying about it. Hue 0 sits
+   at three o'clock and runs clockwise, which is what the pointer maths
+   below assumes. */
+const WHEEL_C = 80;
+function paintWheel(surf) {
+    const s0 = surf || surfaces();
+    const w = $("#wheel");
+    const tuned = root.style.getPropertyValue("--al");
+    root.style.removeProperty("--al");
+    const stops = [];
+    for (let h = 0; h <= 360; h += 15) {
+        stops.push(accentCss(h % 360, WHEEL_C, tuneL(h % 360, WHEEL_C, s0)) + " " + h + "deg");
+    }
+    if (tuned) root.style.setProperty("--al", tuned);
+    w.style.background = "conic-gradient(from 90deg, " + stops.join(", ") + ")";
+
+    const r = (w.clientWidth || 116) / 2;   /* menu is display:none on the first paint */
+    const rad = accent.h * Math.PI / 180;
+    const d = Math.min(1, Math.max(0, (accent.c - C_MIN) / (C_MAX - C_MIN))) * (r - 7);
+    const dot = $("#wheelDot");
+    dot.style.left = (r + Math.cos(rad) * d) + "px";
+    dot.style.top  = (r + Math.sin(rad) * d) + "px";
+    dot.style.background = "var(--accent)";
+    w.setAttribute("aria-valuenow", String(Math.round(accent.h)));
+    w.setAttribute("aria-valuetext", accent.name);
+}
+
+function paintSwatches(surf) {
+    const s0 = surf || surfaces();
+    const tuned = root.style.getPropertyValue("--al");
+    root.style.removeProperty("--al");
+    $$(".swatch").forEach(sw => {
+        const h = Number(sw.dataset.h), c = Number(sw.dataset.c);
+        sw.style.background = accentCss(h, c, tuneL(h, c, s0));
+        sw.setAttribute("aria-checked", String(h === accent.h && c === accent.c));
+    });
+    if (tuned) root.style.setProperty("--al", tuned);
+}
+
+/* The chroma range the picker works in. The floor keeps a grey pick
+   reading as a deliberate accent rather than as broken chrome. */
+const C_MIN = 12, C_MAX = 92;
+
+/* hex -> hue and chroma. Lightness is dropped on purpose: the mode
+   supplies it, which is what stops a near-black custom pick from
+   turning every accented label invisible. */
+function hexToHc(hex) {
+    const m = /^#?([0-9a-f]{6})$/i.exec(hex.trim());
+    if (!m) return null;
+    const n = parseInt(m[1], 16);
+    const r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+    let h = 0;
+    if (d) {
+        if (max === r)      h = ((g - b) / d) % 6;
+        else if (max === g) h = (b - r) / d + 2;
+        else                h = (r - g) / d + 4;
+        h *= 60;
+        if (h < 0) h += 360;
+    }
+    const li = (max + min) / 2;
+    const s = d ? d / (1 - Math.abs(2 * li - 1)) : 0;
+    /* Floor the chroma so a grey pick still reads as a deliberate accent. */
+    return { h: Math.round(h), c: Math.max(C_MIN, Math.min(C_MAX, Math.round(s * 100))) };
+}
+
+function applyDesign(d, save) {
+    const v = DESIGNS.includes(d) ? d : DESIGNS[0];
+    root.dataset.design = v;
+    $$("#designMenu .opt").forEach(o => o.setAttribute("aria-checked", String(o.dataset.set === v)));
+    if (save && !store.set("design", v)) sessionOnly();
+}
+
+function applyMode(m, save) {
+    const v = MODES.includes(m) ? m : MODES[0];
+    root.dataset.mode = v;
+    $$("#modeMenu .opt").forEach(o => o.setAttribute("aria-checked", String(o.dataset.set === v)));
+    tuneAccent();      /* the accent is re-lit for the new surface */
+    if (save && !store.set("mode", v)) sessionOnly();
+}
+
+let warned = false;
+function sessionOnly() {
+    if (warned) return;
+    warned = true;
+    notify("Appearance changed for this session only, saving it needs the page served over http");
+}
+
+/* ---------- menus ---------- */
+const MENUS = [["#designBtn", "#designMenu"], ["#modeBtn", "#modeMenu"], ["#accentBtn", "#accentMenu"]];
+
+function closeMenus(except) {
+    MENUS.forEach(([b, m]) => {
+        if (m === except) return;
+        $(m).hidden = true;
+        $(b).setAttribute("aria-expanded", "false");
+    });
+}
+MENUS.forEach(([b, m]) => {
+    $(b).addEventListener("click", e => {
+        e.stopPropagation();
+        const open = $(m).hidden;
+        closeMenus(open ? m : null);
+        $(m).hidden = !open;
+        $(b).setAttribute("aria-expanded", String(open));
+        if (open && m === "#accentMenu") paintWheel();
+    });
+});
+document.addEventListener("click", e => {
+    if (!MENUS.some(([b, m]) => $(m).contains(e.target) || $(b).contains(e.target))) closeMenus();
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeMenus(); });
+
+$$("#designMenu .opt").forEach(o => o.addEventListener("click", () => {
+    applyDesign(o.dataset.set, true);
+    closeMenus();
+}));
+$$("#modeMenu .opt").forEach(o => o.addEventListener("click", () => {
+    applyMode(o.dataset.set, true);
+    closeMenus();
+}));
+
+/* Swatches are built rather than written out: one source of truth for
+   the hues, and each button gets a real label for screen readers. */
+ACCENTS.forEach(a => {
+    const b = el("button", "swatch");
+    b.type = "button";
+    b.setAttribute("role", "menuitemradio");
+    b.setAttribute("aria-checked", "false");
+    b.setAttribute("aria-label", a.name);
+    b.title = a.name;
+    b.dataset.h = a.h;
+    b.dataset.c = a.c;
+    b.addEventListener("click", () => applyAccent(a, true));
+    $("#swatches").appendChild(b);
+});
+/* Wheel: angle is hue, distance from the middle is chroma. Pointer
+   capture means a drag that leaves the circle still tracks, and the
+   same handler covers mouse, pen and touch. */
+const wheel = $("#wheel");
+function pickFrom(e) {
+    const b = wheel.getBoundingClientRect();
+    const r = b.width / 2;
+    const x = e.clientX - b.left - r, y = e.clientY - b.top - r;
+    let h = Math.atan2(y, x) * 180 / Math.PI;
+    if (h < 0) h += 360;
+    const c = C_MIN + Math.min(1, Math.hypot(x, y) / (r - 7)) * (C_MAX - C_MIN);
+    applyAccent({ h: Math.round(h), c: Math.round(c), name: hcName(h, c) }, true);
+}
+const hcName = (h, c) => "H" + Math.round(h) + " C" + Math.round(c);
+
+wheel.addEventListener("pointerdown", e => {
+    e.preventDefault();
+    wheel.setPointerCapture(e.pointerId);
+    pickFrom(e);
+});
+wheel.addEventListener("pointermove", e => {
+    if (wheel.hasPointerCapture(e.pointerId)) pickFrom(e);
+});
+wheel.addEventListener("keydown", e => {
+    const step = { ArrowLeft: [-4, 0], ArrowRight: [4, 0], ArrowUp: [0, 5], ArrowDown: [0, -5] }[e.key];
+    if (!step) return;
+    e.preventDefault();
+    const h = (accent.h + step[0] + 360) % 360;
+    const c = Math.max(C_MIN, Math.min(C_MAX, accent.c + step[1]));
+    applyAccent({ h: h, c: c, name: hcName(h, c) }, true);
+});
+
+/* Hex entry, for matching something exact. */
+$("#accentHex").addEventListener("input", e => {
+    const hc = hexToHc(e.target.value);
+    if (hc) applyAccent({ h: hc.h, c: hc.c, name: "#" + e.target.value.trim().replace(/^#/, "").toUpperCase() }, true);
+});
+
+/* ---------- restore appearance ---------- */
+applyDesign(store.get("design") || DESIGNS[0], false);
+applyMode(store.get("mode") || MODES[0], false);
+(() => {
+    let a = null;
+    try { a = JSON.parse(store.get("accent")); } catch (e) {}
+    applyAccent(a && isFinite(a.h) ? a : DEFAULT_ACCENT, false);
+})();
+
+/* ---------- tabs ---------- */
+const TABS = [["work", "pane-work"], ["about", "pane-about"]];
+function tab(which) {
+    TABS.forEach(([id, pane]) => {
+        $("#tab-" + id).setAttribute("aria-selected", String(id === which));
+        $("#" + pane).hidden = id !== which;
+    });
+}
+TABS.forEach(([id]) => $("#tab-" + id).addEventListener("click", () => tab(id)));
+
+/* ---------- toggles ---------- */
+function toggle(node, onChange) {
+    const flip = () => {
+        const on = !node.classList.contains("active");
+        node.classList.toggle("active", on);
+        node.setAttribute("aria-checked", String(on));
+        onChange(on);
+    };
+    node.addEventListener("click", flip);
+    node.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); flip(); }
+    });
+}
+
+/* ---------- files ---------- */
+function download(name, text, type) {
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([text], { type: type || "text/plain;charset=utf-8" }));
+    a.download = name;
+    a.click();
+    setTimeout(() => { try { URL.revokeObjectURL(a.href); } catch (e) {} }, 1000);
+}
+function read(file, cb) {
+    const r = new FileReader();
+    r.onload = () => cb(String(r.result), file);
+    r.onerror = () => notify("Could not read that file", true);
+    r.readAsText(file);
+}
+function dropzone(zone, input, cb) {
+    zone.addEventListener("click", () => input.click());
+    zone.addEventListener("keydown", e => {
+        if (e.key === "Enter" || e.key === " ") { e.preventDefault(); input.click(); }
+    });
+    input.addEventListener("change", () => {
+        if (input.files[0]) read(input.files[0], cb);
+        input.value = "";
+    });
+    zone.addEventListener("dragover", e => { e.preventDefault(); zone.classList.add("over"); });
+    zone.addEventListener("dragleave", () => zone.classList.remove("over"));
+    zone.addEventListener("drop", e => {
+        e.preventDefault();
+        zone.classList.remove("over");
+        const f = e.dataTransfer.files[0];
+        if (f) read(f, cb);
+    });
+}
+const slug = s => (s || APP.id).replace(/[^a-z0-9]+/gi, "-").toLowerCase().replace(/^-|-$/g, "");
+const fname = ext => slug(state.meta.title) + "-" + (state.meta.date || today()) + "." + ext;
+
+/* ---------- csv ---------- */
+const csvCell = v => {
+    const s = v == null ? "" : String(v);
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+};
+const toCsv = rows => rows.map(r => r.map(csvCell).join(",")).join("\r\n");
+
+/* ===== ENGINE START: pose geometry and the preset library. No DOM in here. ===== */
+const CELL = 160, GROUND = 150;
+/* Bone lengths in cell units. A standing figure is 100 units tall. */
+const L = { torso: 34, shoulder: 31, neck: 14, ua: 17, fa: 16, th: 22, sh: 22, foot: 6, head: 8 };
+/* Angles are absolute, in degrees: 0 = straight down, 90 = right, 180 = up, -90 = left.
+   t torso (hip to neck), h head (neck to head centre), r/l = near/far side,
+   a/f = upper arm / forearm, t/s = thigh / shin (rt, rs, lt, ls). */
+const ANG = ["t", "h", "ra", "rf", "la", "lf", "rt", "rs", "lt", "ls"];
+const STAND = { x: 80, y: 106, f: 1, t: 180, h: 180, ra: 6, rf: 6, la: 4, lf: 4, rt: 3, rs: 3, lt: -3, ls: -3 };
+const HELD = ["kb", "db", "bb", "plate", "ball"];
+const SCENE = ["bench", "box", "pullbar", "mat", "wall"];
+
+const rad = a => a * Math.PI / 180;
+const at = (o, a, n) => [o[0] + Math.sin(rad(a)) * n, o[1] + Math.cos(rad(a)) * n];
+const r1 = v => Math.round(v * 10) / 10;
+const unit = (a, b) => { const dx = a[0] - b[0], dy = a[1] - b[1], m = Math.hypot(dx, dy) || 1; return [dx / m, dy / m]; };
+const wrapA = a => { a = ((a + 180) % 360 + 360) % 360 - 180; return a === -180 ? 180 : a; };
+
+/* The foot is a short stub. It points the way the figure faces, unless the shin is
+   lying back (lunge, plank), in which case the toe points at the floor. */
+function toeDir(sa, f) {
+    let best = 0, top = -9;
+    [sa + 90, sa - 90].forEach(c => {
+        const sc = f * Math.sin(rad(c)) * 0.6 + Math.cos(rad(c)) * 0.4;
+        if (sc > top) { top = sc; best = c; }
+    });
+    return best;
+}
+
+function skeleton(p) {
+    const hip = [p.x, p.y];
+    const neck = at(hip, p.t, L.torso), sho = at(hip, p.t, L.shoulder);
+    const head = at(neck, p.h, L.neck);
+    const rE = at(sho, p.ra, L.ua), rH = at(rE, p.rf, L.fa);
+    const lE = at(sho, p.la, L.ua), lH = at(lE, p.lf, L.fa);
+    const rK = at(hip, p.rt, L.th), rA = at(rK, p.rs, L.sh);
+    const lK = at(hip, p.lt, L.th), lA = at(lK, p.ls, L.sh);
+    const rT = at(rA, toeDir(p.rs, p.f), L.foot), lT = at(lA, toeDir(p.ls, p.f), L.foot);
+    return { hip, neck, sho, head, rE, rH, lE, lH, rK, rA, lK, lA, rT, lT };
+}
+
+/* Where a held prop sits: the hand it is in, and the direction the forearm points. */
+function anchors(pr, s) {
+    const R = { c: s.rH, d: unit(s.rH, s.rE) }, Lf = { c: s.lH, d: unit(s.lH, s.lE) };
+    if (pr.at === "r") return [R];
+    if (pr.at === "l") return [Lf];
+    if (pr.k === "db") return [R, Lf];
+    const dx = R.d[0] + Lf.d[0], dy = R.d[1] + Lf.d[1], m = Math.hypot(dx, dy) || 1;
+    return [{ c: [(R.c[0] + Lf.c[0]) / 2, (R.c[1] + Lf.c[1]) / 2], d: [dx / m, dy / m] }];
+}
+function heldLow(pr, s) {
+    return anchors(pr, s).map(a => {
+        if (pr.k === "kb") return [a.c[0] + a.d[0] * 17, a.c[1] + a.d[1] * 17];
+        if (pr.k === "plate") return [a.c[0], a.c[1] + 12];
+        if (pr.k === "ball") return [a.c[0] + a.d[0] * 8, a.c[1] + a.d[1] * 8 + 9];
+        return [a.c[0], a.c[1] + 9];
+    });
+}
+
+/* Slide a pose so its lowest point rests on the ground and it sits centred in the cell. */
+function settle(p, held, air) {
+    const q = Object.assign({}, p, { x: 0, y: 0 });
+    const s = skeleton(q);
+    const body = [s.hip, s.neck, s.rE, s.rH, s.lE, s.lH, s.rK, s.rA, s.lK, s.lA, s.rT, s.lT, [s.head[0], s.head[1] + L.head / 2]];
+    let low = body.concat.apply(body, (held || []).map(o => heldLow(o, s))).reduce((m, v) => Math.max(m, v[1]), -1e9);
+    const xs = body.map(v => v[0]).concat([s.head[0] - L.head, s.head[0] + L.head]);
+    p.x = r1(CELL / 2 - (Math.min.apply(null, xs) + Math.max.apply(null, xs)) / 2);
+    p.y = r1(GROUND - 2 - low - (air || 0));
+}
+
+function resolveProp(o, p) {
+    if (HELD.indexOf(o.k) >= 0) return { k: o.k, at: o.at || "b" };
+    if (o.k === "mat") return { k: "mat" };
+    const s = skeleton(p);
+    let x = o.x != null ? o.x : 80, y = o.y != null ? o.y : GROUND;
+    if (o.hand) { x = s.rH[0] + (o.ox || 0); y = s.rH[1]; }
+    else { if (o.ox != null) x = p.x + o.ox; if (o.oy != null) y = p.y + o.oy; }
+    return { k: o.k, x: r1(x), y: r1(y) };
+}
+
+function buildPose(src, shared) {
+    const p = { x: 0, y: 0, f: src.f === -1 ? -1 : 1, props: [] };
+    ANG.forEach(k => { p[k] = src[k] != null ? src[k] : STAND[k]; });
+    const list = (shared || []).concat(src.props || []);
+    const held = list.filter(o => HELD.indexOf(o.k) >= 0);
+    settle(p, held, src.air);
+    if (src.y != null) p.y = src.y;
+    if (src.dx) p.x = r1(p.x + src.dx);
+    p.props = list.map(o => resolveProp(o, p));
+    return p;
+}
+
+function mirrorPose(p) {
+    ANG.forEach(k => { p[k] = r1(wrapA(-p[k])); });
+    p.f = -p.f;
+    p.x = r1(CELL - p.x);
+    p.props.forEach(o => { if (o.x != null) o.x = r1(CELL - o.x); });
+    return p;
+}
+
+/* ---- preset library ---- */
+const P = (...o) => Object.assign({}, ...o);
+const AR = {
+    down:   { ra: 6,   rf: 6,   la: 4,   lf: 4 },
+    fwd:    { ra: 90,  rf: 90,  la: 86,  lf: 86 },
+    up:     { ra: 176, rf: 176, la: 172, lf: 172 },
+    hips:   { ra: -28, rf: 60,  la: -30, lf: 58 },
+    goblet: { ra: 30,  rf: 150, la: 28,  lf: 148 },
+    back:   { ra: -40, rf: -40, la: -45, lf: -45 },
+    rackR:  { ra: 15,  rf: 160, la: 4,   lf: 4 },
+    rackB:  { ra: 15,  rf: 160, la: 13,  lf: 158 },
+    overR:  { ra: 176, rf: 176, la: -30, lf: -30 },
+    fgob:   { ra: 30,  rf: 150, la: -30, lf: -150 },
+    swingBack: { ra: -20, rf: -20, la: -22, lf: -22 }
+};
+const LG = {
+    stand:    { rt: 3,  rs: 3,   lt: -3,  ls: -3 },
+    front:    { rt: 5,  rs: 5,   lt: -5,  ls: -5 },
+    straight: { rt: 2,  rs: 2,   lt: -2,  ls: -2 },
+    squat:    { rt: 78, rs: -12, lt: 74,  ls: -14 },
+    deep:     { rt: 80, rs: -14, lt: 76,  ls: -16 },
+    lunge:    { rt: 80, rs: 0,   lt: -12, ls: -105 },
+    hinge:    { rt: 28, rs: -8,  lt: 24,  ls: -10 },
+    hingeLow: { rt: 60, rs: -18, lt: 56,  ls: -20 },
+    lying:    { rt: 140, rs: -40, lt: 136, ls: -44 },
+    tabletop: { rt: 130, rs: 40, lt: 128, ls: 38 },
+    stride1:  { rt: 25, rs: -5,  lt: -25, ls: -35 },
+    stride2:  { rt: -25, rs: -35, lt: 25, ls: -5 },
+    sumoStand:{ rt: 20, rs: 10,  lt: -20, ls: -10 },
+    sumoSquat:{ rt: 55, rs: -10, lt: -55, ls: 10 }
+};
+const MAT = { k: "mat" };
+const LYING = { t: -90, h: -90 };
+const PLANK_UP = { t: 114, h: 105, rt: -66, rs: -66, lt: -65, ls: -65, ra: 0, rf: 0, la: 2, lf: 2 };
+const QUAD = { t: 111, h: 100, rt: 0, rs: -90, lt: 2, ls: -90, ra: 0, rf: 0, la: 2, lf: 2 };
+const KB_R = { k: "kb", at: "r" }, KB_L = { k: "kb", at: "l" }, KB_B = { k: "kb", at: "b" };
+const DB_B = { k: "db", at: "b" }, DB_R = { k: "db", at: "r" };
+const BENCH = { k: "bench", ox: -20, oy: 3 };
+const HINGE_K = P({ t: 120, h: 140 }, LG.hinge, AR.swingBack);
+const ROW_LEGS = { rt: 25, rs: -10, lt: 22, ls: -12 };
+
+const LIB_SRC = [
+    /* ---------- Kettlebell ---------- */
+    { id: "kb-swing", name: "Kettlebell swing", cat: "Kettlebell", def: { sets: "4", reps: "15", weight: "16 kg", rest: "60 s" },
+      props: [KB_B], poses: [
+        P({ t: 120, h: 140 }, LG.hinge, AR.swingBack),
+        P({ t: 165, h: 175, ra: 55, rf: 55, la: 53, lf: 53 }, { rt: 6, rs: 3, lt: 2, ls: -1 }),
+        P(LG.stand, AR.fwd)] },
+    { id: "american-swing", name: "American swing", cat: "Kettlebell", def: { sets: "4", reps: "12", weight: "16 kg", rest: "60 s" },
+      props: [KB_B], poses: [
+        HINGE_K,
+        P({ t: 172, h: 176, ra: 120, rf: 130, la: 118, lf: 128 }, { rt: 6, rs: 3, lt: 2, ls: -1 }),
+        P(LG.straight, AR.up)] },
+    { id: "single-arm-swing", name: "Single-arm swing", cat: "Kettlebell", def: { sets: "4", reps: "10 each side", weight: "16 kg", rest: "60 s" },
+      props: [KB_R], poses: [
+        P({ t: 120, h: 140, ra: -20, rf: -20, la: -70, lf: -70 }, LG.hinge),
+        P({ t: 178, ra: 90, rf: 90, la: -75, lf: -75 }, LG.stand)] },
+    { id: "kb-deadlift", name: "Kettlebell deadlift", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "20 kg", rest: "60 s" },
+      props: [KB_B], poses: [
+        P({ t: 125, h: 150, ra: 5, rf: 5, la: 3, lf: 3 }, LG.hingeLow),
+        P({ ra: 3, rf: 3, la: 1, lf: 1 }, LG.stand)] },
+    { id: "suitcase-deadlift", name: "Suitcase deadlift", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "24 kg", rest: "60 s" },
+      props: [KB_R], poses: [
+        { t: 140, h: 155, rt: 60, rs: -18, lt: 56, ls: -20, ra: 5, rf: 5, la: 3, lf: 3 },
+        P(LG.stand, AR.down)] },
+    { id: "kb-rdl", name: "Kettlebell RDL", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "20 kg", rest: "60 s" },
+      props: [KB_B], poses: [
+        P(LG.stand, AR.down),
+        { t: 105, h: 125, rt: 12, rs: -4, lt: 10, ls: -6, ra: 5, rf: 5, la: 3, lf: 3 }] },
+    { id: "single-leg-deadlift", name: "Single-leg deadlift", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "16 kg", rest: "60 s" },
+      props: [KB_R], poses: [
+        P(LG.stand, AR.down),
+        { t: 100, h: 105, rt: 5, rs: -3, lt: -105, ls: -105, ra: 5, rf: 5, la: -20, lf: -20 }] },
+    { id: "sumo-deadlift", name: "Sumo deadlift", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "24 kg", rest: "60 s" },
+      props: [KB_B], poses: [
+        P({ t: 178, h: 178, ra: 3, rf: 3, la: -3, lf: -3 }, LG.sumoSquat),
+        P({ t: 180, ra: 3, rf: 3, la: -3, lf: -3 }, LG.sumoStand)] },
+    { id: "goblet-squat", name: "Goblet squat", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "16 kg", rest: "60 s" },
+      props: [KB_B], poses: [
+        P(LG.stand, AR.goblet),
+        P({ t: 155, h: 165 }, LG.deep, AR.goblet)] },
+    { id: "sumo-goblet", name: "Sumo goblet squat", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "20 kg", rest: "60 s" },
+      props: [KB_B], poses: [
+        P(LG.sumoStand, AR.fgob),
+        P({ t: 178 }, LG.sumoSquat, AR.fgob)] },
+    { id: "goblet-lunge", name: "Goblet reverse lunge", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "16 kg", rest: "60 s" },
+      props: [KB_B], poses: [P(LG.stand, AR.goblet), P(LG.lunge, AR.goblet)] },
+    { id: "goblet-lateral", name: "Goblet lateral lunge", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "16 kg", rest: "60 s" },
+      props: [KB_B], poses: [
+        P(LG.front, AR.fgob),
+        P({ rt: 65, rs: -5, lt: -45, ls: -45 }, AR.fgob)] },
+    { id: "rack-squat", name: "Rack squat", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "16 kg", rest: "60 s" },
+      props: [KB_R], poses: [
+        P(LG.stand, AR.rackR),
+        P({ t: 160, h: 170 }, LG.deep, AR.rackR)] },
+    { id: "rack-lunge", name: "Rack lunge", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "16 kg", rest: "60 s" },
+      props: [KB_R], poses: [P(LG.stand, AR.rackR), P(LG.lunge, AR.rackR)] },
+    { id: "overhead-squat", name: "Overhead squat", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "12 kg", rest: "60 s" },
+      props: [KB_R], poses: [
+        P(LG.stand, AR.overR),
+        P({ t: 165, h: 170 }, LG.deep, AR.overR)] },
+    { id: "overhead-lunge", name: "Overhead lunge", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "12 kg", rest: "60 s" },
+      props: [KB_R], poses: [P(LG.stand, AR.overR), P(LG.lunge, AR.overR)] },
+    { id: "kb-clean", name: "Kettlebell clean", cat: "Kettlebell", def: { sets: "4", reps: "8 each side", weight: "16 kg", rest: "60 s" },
+      props: [KB_R], poses: [
+        P({ t: 120, h: 140, ra: -20, rf: -20, la: -60, lf: -60 }, LG.hinge),
+        P({ t: 178, ra: 55, rf: 70, la: -40, lf: -40 }, LG.stand),
+        P(LG.stand, AR.rackR)] },
+    { id: "kb-clean-press", name: "Clean and press", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "12 kg", rest: "60 s" },
+      props: [KB_R], poses: [
+        P(LG.stand, AR.down),
+        P({ ra: 15, rf: 160, la: 4, lf: 4 }, LG.stand),
+        P({ ra: 176, rf: 176, la: -30, lf: -30 }, LG.stand)] },
+    { id: "kb-press", name: "Strict press", cat: "Kettlebell", def: { sets: "4", reps: "6 each side", weight: "16 kg", rest: "75 s" },
+      props: [KB_R], poses: [P(LG.stand, AR.rackR), P(LG.stand, AR.overR)] },
+    { id: "kb-push-press", name: "Push press", cat: "Kettlebell", def: { sets: "4", reps: "6 each side", weight: "16 kg", rest: "75 s" },
+      props: [KB_R], poses: [
+        P(LG.stand, AR.rackR),
+        P({ rt: 30, rs: -8, lt: 26, ls: -10 }, AR.rackR),
+        P({ air: 4 }, LG.straight, AR.overR)] },
+    { id: "kb-thruster", name: "Kettlebell thruster", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s" },
+      props: [KB_B], poses: [
+        P({ t: 155, h: 165 }, LG.deep, AR.goblet),
+        P({ t: 170, h: 175, rt: 40, rs: -12, lt: 36, ls: -14 }, AR.goblet),
+        P(LG.straight, AR.up)] },
+    { id: "kb-snatch", name: "Kettlebell snatch", cat: "Kettlebell", def: { sets: "4", reps: "8 each side", weight: "16 kg", rest: "75 s" },
+      props: [KB_R], poses: [
+        P({ t: 120, h: 140, ra: -20, rf: -20, la: -60, lf: -60 }, LG.hinge),
+        P({ t: 178, ra: 100, rf: 150, la: -60, lf: -60 }, LG.stand),
+        P(LG.straight, AR.overR)] },
+    { id: "kb-high-pull", name: "High pull", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "16 kg", rest: "60 s" },
+      props: [KB_B], poses: [
+        HINGE_K,
+        P({ t: 178, ra: 100, rf: 150, la: 98, lf: 148 }, LG.stand)] },
+    { id: "kb-row", name: "Kettlebell row", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "16 kg", rest: "60 s" },
+      props: [KB_R], poses: [
+        P({ t: 115, h: 140, ra: 5, rf: 5, la: 30, lf: 25 }, ROW_LEGS),
+        P({ t: 115, h: 140, ra: -110, rf: 0, la: 30, lf: 25 }, ROW_LEGS)] },
+    { id: "kb-floor-press", name: "Floor press", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "16 kg", rest: "60 s" },
+      props: [KB_R, MAT], poses: [
+        P(LYING, LG.lying, { ra: 180, rf: 180, la: 90, lf: 90 }),
+        P(LYING, LG.lying, { ra: 20, rf: 175, la: 90, lf: 90 })] },
+    { id: "kb-pullover", name: "Kettlebell pullover", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s" },
+      props: [KB_B, MAT], poses: [
+        P(LYING, LG.lying, { ra: 180, rf: 180, la: 178, lf: 178 }),
+        P(LYING, LG.lying, { ra: -105, rf: -105, la: -107, lf: -107 })] },
+    { id: "kb-bridge", name: "Kettlebell glute bridge", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "20 kg", rest: "45 s" },
+      props: [KB_B, MAT], poses: [
+        P(LYING, LG.lying, { ra: 90, rf: 90, la: 92, lf: 92 }),
+        { t: -65.5, h: -90, rt: 114.5, rs: 0, lt: 112, ls: 0, ra: 114.5, rf: 114.5, la: 112, lf: 112 }] },
+    { id: "turkish-getup", name: "Turkish get-up", cat: "Kettlebell", def: { sets: "3", reps: "3 each side", weight: "12 kg", rest: "90 s", note: "Eyes on the bell" },
+      props: [KB_R], poses: [
+        P(LYING, { rt: 140, rs: -40, lt: 92, ls: 92, ra: 180, rf: 180, la: 80, lf: 80, props: [MAT] }),
+        { t: -155, h: -165, rt: 140, rs: -40, lt: 92, ls: 92, ra: 180, rf: 180, la: -32, lf: -32, props: [MAT] },
+        P(LG.stand, AR.overR)] },
+    { id: "kb-windmill", name: "Windmill", cat: "Kettlebell", def: { sets: "3", reps: "5 each side", weight: "8 kg", rest: "60 s" },
+      props: [KB_R], poses: [
+        { t: 180, h: 180, rt: 15, rs: 10, lt: -15, ls: -10, ra: 178, rf: 178, la: -5, lf: -5 },
+        { t: -135, h: -150, rt: 15, rs: 10, lt: -15, ls: -10, ra: 178, rf: 178, la: -20, lf: -20 }] },
+    { id: "kb-tricep", name: "Overhead tricep extension", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "12 kg", rest: "45 s" },
+      props: [KB_B], poses: [
+        P(LG.stand, { ra: 178, rf: 178, la: 176, lf: 176 }),
+        P(LG.stand, { ra: 178, rf: -25, la: 176, lf: -27 })] },
+    { id: "farmer-carry", name: "Farmer carry", cat: "Kettlebell", def: { sets: "3", time: "30 s", weight: "2 x 16 kg", rest: "60 s" },
+      props: [KB_R, KB_L], poses: [P(LG.stride1, AR.down), P(LG.stride2, AR.down)] },
+    { id: "suitcase-carry", name: "Suitcase carry", cat: "Kettlebell", def: { sets: "3", time: "30 s each side", weight: "24 kg", rest: "60 s" },
+      props: [KB_R], poses: [P(LG.stride1, AR.down), P(LG.stride2, AR.down)] },
+    { id: "rack-carry", name: "Rack carry", cat: "Kettlebell", def: { sets: "3", time: "30 s each side", weight: "16 kg", rest: "60 s" },
+      props: [KB_R], poses: [P({ t: 178 }, LG.stride1, AR.rackR), P({ t: 178 }, LG.stride2, AR.rackR)] },
+    { id: "waiter-walk", name: "Waiter walk", cat: "Kettlebell", def: { sets: "3", time: "30 s each side", weight: "12 kg", rest: "60 s" },
+      props: [KB_R], poses: [P(LG.stride1, AR.overR), P(LG.stride2, AR.overR)] },
+    { id: "goblet-carry", name: "Goblet carry", cat: "Kettlebell", def: { sets: "3", time: "40 s", weight: "20 kg", rest: "60 s" },
+      props: [KB_B], poses: [P(LG.stride1, AR.goblet), P(LG.stride2, AR.goblet)] },
+    { id: "double-clean", name: "Double clean", cat: "Kettlebell", def: { sets: "4", reps: "6", weight: "2 x 16 kg", rest: "90 s" },
+      props: [KB_R, KB_L], poses: [
+        HINGE_K,
+        P({ t: 178, ra: 55, rf: 70, la: 53, lf: 68 }, LG.stand),
+        P(LG.stand, AR.rackB)] },
+    { id: "double-front-squat", name: "Double front squat", cat: "Kettlebell", def: { sets: "4", reps: "8", weight: "2 x 16 kg", rest: "90 s" },
+      props: [KB_R, KB_L], poses: [
+        P(LG.stand, AR.rackB),
+        P({ t: 160, h: 170 }, LG.deep, AR.rackB)] },
+    { id: "double-press", name: "Double press", cat: "Kettlebell", def: { sets: "4", reps: "6", weight: "2 x 16 kg", rest: "90 s" },
+      props: [KB_R, KB_L], poses: [P(LG.stand, AR.rackB), P(LG.stand, AR.up)] },
+    { id: "double-deadlift", name: "Double deadlift", cat: "Kettlebell", def: { sets: "4", reps: "8", weight: "2 x 24 kg", rest: "90 s" },
+      props: [KB_R, KB_L], poses: [
+        P({ t: 125, h: 150, ra: 5, rf: 5, la: 3, lf: 3 }, LG.hingeLow),
+        P(LG.stand, AR.down)] },
+
+    /* ---------- Dumbbell ---------- */
+    { id: "overhead-press", name: "Dumbbell press", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s" },
+      props: [DB_B], poses: [
+        P({ ra: 55, rf: 178, la: -55, lf: -178 }, LG.front),
+        P({ ra: 170, rf: 176, la: -170, lf: -176 }, LG.front)] },
+    { id: "db-bench", name: "Dumbbell bench press", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "16 kg", rest: "75 s" },
+      props: [BENCH, DB_B], poses: [
+        { t: -90, h: -90, rt: 105, rs: 10, lt: 101, ls: 12, ra: 180, rf: 180, la: 178, lf: 178 },
+        { t: -90, h: -90, rt: 105, rs: 10, lt: 101, ls: 12, ra: 20, rf: 175, la: 18, lf: 173 }] },
+    { id: "bent-row", name: "Bent-over row", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s" },
+      props: [DB_B], poses: [
+        P({ t: 115, h: 140, ra: 5, rf: 5, la: 3, lf: 3 }, ROW_LEGS),
+        P({ t: 115, h: 140, ra: -110, rf: 0, la: -112, lf: 2 }, ROW_LEGS)] },
+    { id: "bicep-curl", name: "Bicep curl", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "8 kg", rest: "45 s" },
+      props: [DB_B], poses: [
+        P(LG.stand, AR.down),
+        P({ ra: 8, rf: 150, la: 6, lf: 148 }, LG.stand)] },
+    { id: "lateral-raise", name: "Lateral raise", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "6 kg", rest: "45 s" },
+      props: [DB_B], poses: [
+        P({ ra: 8, rf: 8, la: -8, lf: -8 }, LG.front),
+        P({ ra: 85, rf: 85, la: -85, lf: -85 }, LG.front)] },
+    { id: "front-raise", name: "Front raise", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "6 kg", rest: "45 s" },
+      props: [DB_B], poses: [P(LG.stand, AR.down), P(LG.stand, AR.fwd)] },
+    { id: "tricep-kickback", name: "Tricep kickback", cat: "Dumbbell", def: { sets: "3", reps: "12 each side", weight: "6 kg", rest: "45 s" },
+      props: [DB_R], poses: [
+        P({ t: 115, h: 140, ra: -65, rf: 5, la: 30, lf: 25 }, ROW_LEGS),
+        P({ t: 115, h: 140, ra: -65, rf: -65, la: 30, lf: 25 }, ROW_LEGS)] },
+    { id: "db-tricep", name: "Overhead tricep extension (db)", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "10 kg", rest: "45 s" },
+      props: [DB_B], poses: [
+        P(LG.stand, { ra: 178, rf: 178, la: 176, lf: 176 }),
+        P(LG.stand, { ra: 178, rf: -25, la: 176, lf: -27 })] },
+    { id: "db-squat", name: "Dumbbell squat", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "12 kg", rest: "60 s" },
+      props: [DB_B], poses: [
+        P(LG.stand, AR.down),
+        P({ t: 150, h: 160 }, LG.squat, AR.down)] },
+    { id: "db-lunge", name: "Dumbbell lunge", cat: "Dumbbell", def: { sets: "3", reps: "10 each side", weight: "10 kg", rest: "60 s" },
+      props: [DB_B], poses: [P(LG.stand, AR.down), P(LG.lunge, AR.down)] },
+    { id: "db-deadlift", name: "Dumbbell deadlift", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "16 kg", rest: "60 s" },
+      props: [DB_B], poses: [
+        P({ t: 125, h: 150, ra: 5, rf: 5, la: 3, lf: 3 }, LG.hingeLow),
+        P(LG.stand, AR.down)] },
+    { id: "db-rdl", name: "Dumbbell RDL", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "16 kg", rest: "60 s" },
+      props: [DB_B], poses: [
+        P(LG.stand, AR.down),
+        { t: 105, h: 125, rt: 12, rs: -4, lt: 10, ls: -6, ra: 5, rf: 5, la: 3, lf: 3 }] },
+
+    /* ---------- Barbell ---------- */
+    { id: "bench-press", name: "Bench press", cat: "Barbell", def: { sets: "4", reps: "8", weight: "40 kg", rest: "90 s" },
+      props: [BENCH, { k: "plate", at: "b" }], poses: [
+        { t: -90, h: -90, rt: 105, rs: 10, lt: 101, ls: 12, ra: 180, rf: 180, la: 178, lf: 178 },
+        { t: -90, h: -90, rt: 105, rs: 10, lt: 101, ls: 12, ra: 20, rf: 175, la: 18, lf: 173 }] },
+    { id: "deadlift", name: "Barbell deadlift", cat: "Barbell", def: { sets: "4", reps: "6", weight: "60 kg", rest: "90 s" },
+      props: [{ k: "plate", at: "b" }], poses: [
+        P({ t: 125, h: 150, ra: 5, rf: 5, la: 3, lf: 3 }, LG.hingeLow),
+        P({ ra: 3, rf: 3, la: 1, lf: 1 }, LG.stand)] },
+    { id: "bb-rdl", name: "Barbell RDL", cat: "Barbell", def: { sets: "3", reps: "8", weight: "40 kg", rest: "90 s" },
+      props: [{ k: "plate", at: "b" }], poses: [
+        P(LG.stand, AR.down),
+        { t: 105, h: 125, rt: 12, rs: -4, lt: 10, ls: -6, ra: 5, rf: 5, la: 3, lf: 3 }] },
+    { id: "bb-row", name: "Barbell row", cat: "Barbell", def: { sets: "4", reps: "8", weight: "40 kg", rest: "90 s" },
+      props: [{ k: "plate", at: "b" }], poses: [
+        P({ t: 115, h: 140, ra: 5, rf: 5, la: 3, lf: 3 }, ROW_LEGS),
+        P({ t: 115, h: 140, ra: -110, rf: 0, la: -112, lf: 2 }, ROW_LEGS)] },
+    { id: "bb-press", name: "Barbell overhead press", cat: "Barbell", def: { sets: "4", reps: "6", weight: "30 kg", rest: "90 s" },
+      props: [{ k: "bb", at: "b" }], poses: [
+        P({ ra: 55, rf: 178, la: -55, lf: -178 }, LG.front),
+        P({ ra: 170, rf: 176, la: -170, lf: -176 }, LG.front)] },
+
+    /* ---------- Legs ---------- */
+    { id: "squat", name: "Squat", cat: "Legs", def: { sets: "3", reps: "15", rest: "45 s" }, poses: [
+        P(LG.stand, AR.fwd),
+        P({ t: 140, h: 150 }, LG.squat, AR.fwd)] },
+    { id: "squat-hold", name: "Squat hold", cat: "Legs", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+        P({ t: 145, h: 155 }, LG.deep, AR.fwd)] },
+    { id: "sumo-squat", name: "Sumo squat", cat: "Legs", def: { sets: "3", reps: "15", rest: "45 s" }, poses: [
+        P({ ra: 30, rf: 150, la: -30, lf: -150 }, LG.sumoStand),
+        P({ t: 178, ra: 30, rf: 150, la: -30, lf: -150 }, LG.sumoSquat)] },
+    { id: "jump-squat", name: "Jump squat", cat: "Legs", def: { sets: "3", reps: "10", rest: "60 s" }, poses: [
+        P({ t: 140, h: 150 }, LG.squat, AR.back),
+        P({ air: 20 }, LG.straight, AR.up)] },
+    { id: "lunge", name: "Lunge", cat: "Legs", def: { sets: "3", reps: "10 each side", rest: "45 s" }, poses: [
+        P(LG.stand, AR.hips), P(LG.lunge, AR.hips)] },
+    { id: "split-squat", name: "Split squat hold", cat: "Legs", def: { sets: "3", time: "30 s each side", rest: "30 s" }, poses: [
+        P(LG.lunge, AR.hips)] },
+    { id: "jump-lunge", name: "Jump lunge", cat: "Legs", def: { sets: "3", reps: "10", rest: "60 s" }, poses: [
+        P(LG.lunge, AR.hips),
+        { air: 22, rt: -25, rs: -100, lt: 75, ls: 0, ra: 60, rf: 100, la: -60, lf: -60 }] },
+    { id: "side-lunge", name: "Side lunge", cat: "Legs", def: { sets: "3", reps: "10 each side", rest: "45 s" }, poses: [
+        P({ ra: 40, rf: 140, la: -40, lf: -140 }, LG.front),
+        { rt: 65, rs: -5, lt: -45, ls: -45, ra: 40, rf: 140, la: -40, lf: -140 }] },
+    { id: "step-up", name: "Step-up", cat: "Legs", def: { sets: "3", reps: "10 each side", rest: "45 s" }, poses: [
+        { rt: 85, rs: 5, lt: -3, ls: -3, ra: 40, rf: 90, la: 20, lf: 80, props: [{ k: "box", ox: 26, oy: 25 }] },
+        { y: 86, rt: 2, rs: 2, lt: 90, ls: 10, ra: 40, rf: 90, la: -50, lf: 20, props: [{ k: "box", ox: 0, y: 130 }] }] },
+    { id: "box-jump", name: "Box jump", cat: "Legs", def: { sets: "3", reps: "6", rest: "75 s" }, poses: [
+        { t: 140, h: 150, rt: 78, rs: -12, lt: 74, ls: -14, ra: -40, rf: -40, la: -45, lf: -45, dx: -22, props: [{ k: "box", x: 122, y: 110 }] },
+        { y: 62, rt: 2, rs: 2, lt: -2, ls: -2, ra: 120, rf: 120, la: 116, lf: 116, dx: 42, props: [{ k: "box", x: 122, y: 110 }] }] },
+    { id: "wall-sit", name: "Wall sit", cat: "Legs", def: { sets: "3", time: "40 s", rest: "45 s" }, poses: [
+        { rt: 90, rs: 0, lt: 88, ls: 0, ra: 40, rf: 95, la: 38, lf: 93, props: [{ k: "wall", ox: -5 }] }] },
+    { id: "glute-bridge", name: "Glute bridge", cat: "Legs", def: { sets: "3", reps: "15", rest: "45 s" }, poses: [
+        P(LYING, LG.lying, { ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }),
+        { t: -65.5, h: -90, rt: 114.5, rs: 0, lt: 112, ls: 0, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
+    { id: "sl-bridge", name: "Single-leg glute bridge", cat: "Legs", def: { sets: "3", reps: "10 each side", rest: "45 s" }, poses: [
+        { t: -65.5, h: -90, rt: 114.5, rs: 0, lt: 114.5, ls: 114.5, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
+    { id: "donkey-kick", name: "Donkey kick", cat: "Legs", def: { sets: "3", reps: "12 each side", rest: "30 s" }, poses: [
+        P(QUAD, { props: [MAT] }),
+        P(QUAD, { rt: -95, rs: 180, props: [MAT] })] },
+
+    /* ---------- Push ---------- */
+    { id: "push-up", name: "Push-up", cat: "Push", def: { sets: "3", reps: "12", rest: "45 s" }, poses: [
+        P({ props: [MAT] }, PLANK_UP),
+        { t: 96, h: 92, rt: -84, rs: -84, lt: -83, ls: -83, ra: -118, rf: 5, la: -120, lf: 6, props: [MAT] }] },
+    { id: "knee-push-up", name: "Knee push-up", cat: "Push", def: { sets: "3", reps: "10", rest: "45 s" }, poses: [
+        { t: 128, h: 120, rt: -52, rs: -125, lt: -51, ls: -124, ra: 0, rf: 0, la: 2, lf: 2, props: [MAT] },
+        { t: 99, h: 95, rt: -81, rs: -125, lt: -80, ls: -124, ra: -118, rf: 5, la: -120, lf: 6, props: [MAT] }] },
+
+    /* ---------- Pull ---------- */
+    { id: "pull-up", name: "Pull-up", cat: "Pull", def: { sets: "3", reps: "6", rest: "90 s" },
+      props: [{ k: "pullbar", hand: true }], poses: [
+        P({ air: 12, h: 178 }, LG.straight, { ra: 178, rf: 178, la: 176, lf: 176 }),
+        { y: 58.4, h: 175, rt: 5, rs: -35, lt: -5, ls: -40, ra: 15, rf: 170, la: 13, lf: 168 }] },
+    { id: "hang-knee-raise", name: "Hanging knee raise", cat: "Pull", def: { sets: "3", reps: "10", rest: "60 s" },
+      props: [{ k: "pullbar", hand: true }], poses: [
+        { y: 92, h: 178, rt: 2, rs: 2, lt: -2, ls: -2, ra: 178, rf: 178, la: 176, lf: 176 },
+        { y: 92, h: 178, t: 175, rt: 105, rs: 15, lt: 100, ls: 12, ra: 178, rf: 178, la: 176, lf: 176 }] },
+    { id: "hang-leg-raise", name: "Hanging leg raise", cat: "Pull", def: { sets: "3", reps: "8", rest: "60 s" },
+      props: [{ k: "pullbar", hand: true }], poses: [
+        { y: 92, h: 178, rt: 2, rs: 2, lt: -2, ls: -2, ra: 178, rf: 178, la: 176, lf: 176 },
+        { y: 92, h: 178, t: 172, rt: 88, rs: 88, lt: 84, ls: 84, ra: 178, rf: 178, la: 176, lf: 176 }] },
+
+    /* ---------- Core ---------- */
+    { id: "plank", name: "Plank", cat: "Core", def: { sets: "3", time: "45 s", rest: "30 s" }, poses: [
+        { t: 103, h: 100, rt: -77, rs: -77, lt: -76, ls: -76, ra: 0, rf: 90, la: 2, lf: 92, props: [MAT] }] },
+    { id: "side-plank", name: "Side plank", cat: "Core", def: { sets: "3", time: "30 s each side", rest: "30 s" }, poses: [
+        { t: -103, h: -100, rt: 77, rs: 77, lt: 77, ls: 77, ra: 0, rf: 90, la: 178, lf: 178, props: [MAT] }] },
+    { id: "bird-dog", name: "Bird dog", cat: "Core", def: { sets: "3", reps: "10 each side", rest: "30 s" }, poses: [
+        P(QUAD, { props: [MAT] }),
+        P(QUAD, { t: 100, h: 90, ra: 95, rf: 95, lt: -95, ls: -95, props: [MAT] })] },
+    { id: "crunch", name: "Crunch", cat: "Core", def: { sets: "3", reps: "15", rest: "30 s" }, poses: [
+        P(LYING, LG.lying, { ra: 100, rf: -150, la: 98, lf: -152, props: [MAT] }),
+        { t: -132, h: -135, rt: 140, rs: -40, lt: 136, ls: -44, ra: 100, rf: -150, la: 98, lf: -152, props: [MAT] }] },
+    { id: "sit-up", name: "Sit-up", cat: "Core", def: { sets: "3", reps: "15", rest: "45 s" }, poses: [
+        P({ t: -90, h: -90, ra: 100, rf: -150, la: 98, lf: -152, props: [MAT] }, LG.lying),
+        P({ t: 170, h: 165, ra: 100, rf: -150, la: 98, lf: -152, props: [MAT] }, LG.lying)] },
+    { id: "bicycle", name: "Bicycle crunch", cat: "Core", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+        { t: -132, h: -135, rt: 130, rs: 40, lt: 100, ls: 100, ra: 100, rf: -150, la: 98, lf: -152, props: [MAT] },
+        { t: -132, h: -135, rt: 100, rs: 100, lt: 128, ls: 38, ra: 100, rf: -150, la: 98, lf: -152, props: [MAT] }] },
+    { id: "flutter", name: "Flutter kicks", cat: "Core", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+        { t: -95, h: -100, rt: 118, rs: 118, lt: 100, ls: 100, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] },
+        { t: -95, h: -100, rt: 100, rs: 100, lt: 118, ls: 118, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
+    { id: "leg-raise", name: "Leg raise", cat: "Core", def: { sets: "3", reps: "12", rest: "45 s" }, poses: [
+        { t: -90, h: -90, rt: 90, rs: 90, lt: 90, ls: 90, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] },
+        { t: -90, h: -90, rt: 175, rs: 178, lt: 173, ls: 176, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
+    { id: "dead-bug", name: "Dead bug", cat: "Core", def: { sets: "3", reps: "10 each side", rest: "30 s" }, poses: [
+        P(LYING, LG.tabletop, { ra: 180, rf: 180, la: 178, lf: 178, props: [MAT] }),
+        P(LYING, { rt: 130, rs: 40, lt: 100, ls: 100, ra: -105, rf: -105, la: 178, lf: 178, props: [MAT] })] },
+    { id: "hollow-hold", name: "Hollow hold", cat: "Core", def: { sets: "3", time: "20 s", rest: "30 s" }, poses: [
+        { t: -125, h: -120, rt: 108, rs: 108, lt: 105, ls: 105, ra: -120, rf: -120, la: -122, lf: -122, props: [MAT] }] },
+    { id: "v-sit", name: "V-sit hold", cat: "Core", def: { sets: "3", time: "20 s", rest: "30 s" }, poses: [
+        { t: -150, h: -155, rt: 130, rs: 130, lt: 126, ls: 126, ra: 95, rf: 95, la: 92, lf: 92, props: [MAT] }] },
+    { id: "mountain-climber", name: "Mountain climber", cat: "Core", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+        P({ props: [MAT] }, PLANK_UP, { rt: 62, rs: -35 }),
+        P({ props: [MAT] }, PLANK_UP, { lt: 60, ls: -37 })] },
+    { id: "superman", name: "Superman", cat: "Core", def: { sets: "3", reps: "12", rest: "30 s" }, poses: [
+        { t: 100, h: 85, ra: 120, rf: 125, la: 118, lf: 123, rt: -105, rs: -115, lt: -103, ls: -113, props: [MAT] }] },
+
+    /* ---------- Cardio ---------- */
+    { id: "jumping-jack", name: "Jumping jack", cat: "Cardio", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+        P({ ra: 12, rf: 12, la: -12, lf: -12 }, LG.stand),
+        { air: 4, rt: 18, rs: 18, lt: -18, ls: -18, ra: 150, rf: 150, la: -150, lf: -150 }] },
+    { id: "high-knees", name: "High knees", cat: "Cardio", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+        { air: 5, t: 178, rt: 100, rs: -10, lt: -2, ls: -2, la: 40, lf: 150, ra: -50, rf: -10 },
+        { air: 5, t: 178, lt: 100, ls: -10, rt: -2, rs: -2, ra: 40, rf: 150, la: -50, lf: -10 }] },
+    { id: "butt-kicks", name: "Butt kicks", cat: "Cardio", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+        { air: 3, rt: -8, rs: -145, lt: -2, ls: -2, la: 40, lf: 150, ra: -50, rf: -10 },
+        { air: 3, lt: -8, ls: -145, rt: -2, rs: -2, ra: 40, rf: 150, la: -50, lf: -10 }] },
+    { id: "sprint", name: "Sprint", cat: "Cardio", def: { sets: "6", time: "20 s", rest: "40 s" }, poses: [
+        { air: 8, t: 160, h: 165, rt: 70, rs: -20, lt: -35, ls: -60, ra: -60, rf: -10, la: 50, lf: 120 },
+        { air: 8, t: 160, h: 165, lt: 70, ls: -20, rt: -35, rs: -60, la: -60, lf: -10, ra: 50, rf: 120 }] },
+    { id: "tuck-jump", name: "Tuck jump", cat: "Cardio", def: { sets: "3", reps: "8", rest: "60 s" }, poses: [
+        P({ t: 140, h: 150 }, LG.squat, AR.back),
+        { air: 24, t: 172, rt: 100, rs: -5, lt: 98, ls: -7, ra: 60, rf: 90, la: 56, lf: 86 }] },
+    { id: "broad-jump", name: "Broad jump", cat: "Cardio", def: { sets: "3", reps: "6", rest: "60 s" }, poses: [
+        P({ t: 140, h: 150 }, LG.squat, AR.back),
+        { air: 22, t: 135, h: 130, rt: 40, rs: -5, lt: 36, ls: -8, ra: 130, rf: 130, la: 126, lf: 126 }] },
+    { id: "burpee", name: "Burpee", cat: "Cardio", def: { sets: "3", reps: "8", rest: "60 s" }, poses: [
+        { t: 125, h: 140, rt: 110, rs: -25, lt: 106, ls: -28, ra: 5, rf: 5, la: 3, lf: 3 },
+        P({ props: [MAT] }, PLANK_UP),
+        P({ air: 24 }, LG.straight, AR.up)] },
+    { id: "inchworm", name: "Inchworm", cat: "Cardio", def: { sets: "3", reps: "6", rest: "45 s" }, poses: [
+        P(LG.stand, AR.down),
+        { t: 69, h: 35, rt: 2, rs: 2, lt: -2, ls: -2, ra: 0, rf: 0, la: 2, lf: 2 },
+        P({ props: [MAT] }, PLANK_UP)] },
+    { id: "jab-cross", name: "Jab and cross", cat: "Cardio", def: { sets: "3", time: "45 s", rest: "30 s" }, poses: [
+        { t: 175, h: 175, rt: 25, rs: 5, lt: -20, ls: -5, la: 88, lf: 88, ra: 25, rf: 150 },
+        { t: 172, h: 175, rt: 25, rs: 5, lt: -20, ls: -5, ra: 90, rf: 90, la: 25, lf: 150 }] },
+
+    /* ---------- Stretch ---------- */
+    { id: "quad-stretch", name: "Quad stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side" }, poses: [
+        { rt: 8, rs: -150, lt: -2, ls: -2, ra: -30, rf: -10, la: 80, lf: 80 }] },
+    { id: "hip-flexor", name: "Hip flexor stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side" }, poses: [
+        P(LG.lunge, AR.up)] },
+    { id: "childs-pose", name: "Child's pose", cat: "Stretch", def: { sets: "1", time: "45 s" }, poses: [
+        { t: 90, h: 90, rt: 90, rs: -90, lt: 88, ls: -90, ra: 90, rf: 90, la: 88, lf: 88, props: [MAT] }] },
+    { id: "cobra", name: "Cobra stretch", cat: "Stretch", def: { sets: "2", time: "30 s" }, poses: [
+        { t: 125, h: 140, rt: -90, rs: -90, lt: -88, ls: -88, ra: 57, rf: 57, la: 55, lf: 55, props: [MAT] }] },
+    { id: "forward-fold", name: "Forward fold", cat: "Stretch", def: { sets: "2", time: "30 s" }, poses: [
+        { t: 69, h: 35, rt: 2, rs: 2, lt: -2, ls: -2, ra: 0, rf: 0, la: 2, lf: 2 }] },
+    { id: "seated-hamstring", name: "Seated hamstring stretch", cat: "Stretch", def: { sets: "2", time: "30 s" }, poses: [
+        { t: 108, h: 100, rt: 90, rs: 90, lt: 88, ls: 88, ra: 90, rf: 90, la: 88, lf: 88, props: [MAT] }] },
+    { id: "side-stretch", name: "Standing side stretch", cat: "Stretch", def: { sets: "2", time: "20 s each side" }, poses: [
+        { t: -160, h: -162, rt: 5, rs: 5, lt: -5, ls: -5, ra: -170, rf: -170, la: -168, lf: -168 }] },
+    { id: "tricep-stretch", name: "Tricep stretch", cat: "Stretch", def: { sets: "2", time: "20 s each side" }, poses: [
+        P(LG.stand, { ra: 178, rf: -25, la: 130, lf: 175 })] },
+    { id: "chest-stretch", name: "Chest stretch", cat: "Stretch", def: { sets: "2", time: "20 s" }, poses: [
+        P(LG.stand, { ra: -45, rf: -45, la: -48, lf: -48 })] },
+
+    /* ---------- Mobility ---------- */
+    { id: "arm-circles", name: "Arm circles", cat: "Mobility", def: { sets: "2", reps: "10 each way" }, poses: [
+        P(LG.front, { ra: 90, rf: 90, la: -90, lf: -90 }),
+        P(LG.front, { ra: 150, rf: 150, la: -150, lf: -150 }),
+        P(LG.front, { ra: 35, rf: 35, la: -35, lf: -35 })] },
+    { id: "leg-swings", name: "Leg swings", cat: "Mobility", def: { sets: "2", reps: "10 each leg" }, poses: [
+        { rt: 55, rs: 55, lt: -3, ls: -3, ra: 40, rf: 40, la: -30, lf: -30 },
+        { rt: -40, rs: -40, lt: -3, ls: -3, ra: 40, rf: 40, la: -30, lf: -30 }] }
+];
+
+function buildLib() {
+    return LIB_SRC.map(it => ({
+        id: it.id, name: it.name, cat: it.cat, def: it.def,
+        poses: it.poses.map(p => buildPose(p, it.props))
+    }));
+}
+/* ===== ENGINE END ===== */
+
+/* ---------- svg drawing ---------- */
+const SVGNS = "http://www.w3.org/2000/svg";
+function svgEl(tag, attrs, parent) {
+    const n = document.createElementNS(SVGNS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+}
+const pts = arr => arr.map(q => r1(q[0]) + "," + r1(q[1])).join(" ");
+
+function drawScene(g, o) {
+    if (o.k === "bench") {
+        svgEl("rect", { class: "solid", x: o.x - 42, y: o.y, width: 84, height: 4, rx: 1.5 }, g);
+        svgEl("line", { class: "ln thin", x1: o.x - 34, y1: o.y + 4, x2: o.x - 34, y2: GROUND }, g);
+        svgEl("line", { class: "ln thin", x1: o.x + 34, y1: o.y + 4, x2: o.x + 34, y2: GROUND }, g);
+    } else if (o.k === "box") {
+        svgEl("rect", { class: "bx", x: o.x - 18, y: o.y, width: 36, height: Math.max(4, GROUND - o.y) }, g);
+    } else if (o.k === "pullbar") {
+        svgEl("line", { class: "ln thin faint", x1: o.x - 38, y1: o.y, x2: o.x - 38, y2: GROUND }, g);
+        svgEl("line", { class: "ln thin faint", x1: o.x + 38, y1: o.y, x2: o.x + 38, y2: GROUND }, g);
+        svgEl("line", { class: "ln", x1: o.x - 38, y1: o.y, x2: o.x + 38, y2: o.y }, g);
+    } else if (o.k === "mat") {
+        svgEl("rect", { class: "bx", x: 6, y: GROUND - 4, width: 148, height: 4, rx: 2 }, g);
+    } else if (o.k === "kbf") {
+        svgEl("circle", { class: "ln thin", cx: o.x, cy: o.y - 8, r: 5 }, g);
+        svgEl("circle", { class: "solid", cx: o.x, cy: o.y, r: 7 }, g);
+    } else if (o.k === "wall") {
+        svgEl("line", { class: "ln", x1: o.x, y1: 12, x2: o.x, y2: GROUND }, g);
+        for (let yy = 20; yy < GROUND; yy += 12) svgEl("line", { class: "ln thin", x1: o.x - 7, y1: yy + 7, x2: o.x, y2: yy }, g);
+    }
+}
+
+function drawHeld(g, o, s) {
+    anchors(o, s).forEach(a => {
+        const cx = a.c[0], cy = a.c[1], dx = a.d[0], dy = a.d[1];
+        if (o.k === "kb") {
+            svgEl("circle", { class: "ln thin", cx: r1(cx + dx * 3), cy: r1(cy + dy * 3), r: 5 }, g);
+            svgEl("circle", { class: "solid", cx: r1(cx + dx * 10), cy: r1(cy + dy * 10), r: 7 }, g);
+        } else if (o.k === "db") {
+            const rot = Math.atan2(dy, dx) * 180 / Math.PI;
+            const q = svgEl("g", { transform: "translate(" + r1(cx) + " " + r1(cy) + ") rotate(" + r1(rot) + ")" }, g);
+            svgEl("line", { class: "ln mid", x1: 0, y1: -7, x2: 0, y2: 7 }, q);
+            svgEl("rect", { class: "solid", x: -2.8, y: -10.5, width: 5.6, height: 6.5, rx: 1 }, q);
+            svgEl("rect", { class: "solid", x: -2.8, y: 4, width: 5.6, height: 6.5, rx: 1 }, q);
+        } else if (o.k === "bb") {
+            svgEl("line", { class: "ln mid", x1: cx - 46, y1: cy, x2: cx + 46, y2: cy }, g);
+            [-44, 44].forEach(sx => svgEl("rect", { class: "solid", x: cx + sx - 2.4, y: cy - 13, width: 4.8, height: 26, rx: 1.2 }, g));
+            [-38, 38].forEach(sx => svgEl("rect", { class: "solid", x: cx + sx - 2, y: cy - 9, width: 4, height: 18, rx: 1 }, g));
+        } else if (o.k === "plate") {
+            svgEl("circle", { class: "ln thin pl", cx: r1(cx), cy: r1(cy), r: 12 }, g);
+            svgEl("circle", { class: "solid", cx: r1(cx), cy: r1(cy), r: 2.4 }, g);
+        } else if (o.k === "ball") {
+            svgEl("circle", { class: "ln thin bl", cx: r1(cx + dx * 8), cy: r1(cy + dy * 8), r: 9 }, g);
+        }
+    });
+}
+
+function drawPose(g, p) {
+    const s = skeleton(p);
+    p.props.filter(o => SCENE.indexOf(o.k) >= 0).forEach(o => drawScene(g, o));
+    const far = svgEl("g", { opacity: "0.5" }, g);
+    svgEl("polyline", { class: "ln", points: pts([s.hip, s.lK, s.lA, s.lT]) }, far);
+    svgEl("polyline", { class: "ln", points: pts([s.sho, s.lE, s.lH]) }, far);
+    svgEl("line", { class: "ln", x1: r1(s.hip[0]), y1: r1(s.hip[1]), x2: r1(s.neck[0]), y2: r1(s.neck[1]) }, g);
+    svgEl("polyline", { class: "ln", points: pts([s.hip, s.rK, s.rA, s.rT]) }, g);
+    svgEl("polyline", { class: "ln", points: pts([s.sho, s.rE, s.rH]) }, g);
+    svgEl("line", { class: "ln", x1: r1(s.neck[0]), y1: r1(s.neck[1]), x2: r1(s.head[0]), y2: r1(s.head[1]) }, g);
+    svgEl("circle", { class: "hd", cx: r1(s.head[0]), cy: r1(s.head[1]), r: L.head }, g);
+    p.props.filter(o => HELD.indexOf(o.k) >= 0).forEach(o => drawHeld(g, o, s));
+}
+
+/* A whole panel: its poses side by side on one ground line, with arrows between. */
+function strip(panel, cls) {
+    const n = panel.poses.length;
+    const svg = svgEl("svg", { viewBox: "0 0 " + (CELL * n) + " " + CELL, class: cls || "strip", "aria-hidden": "true" });
+    if (panel.ground) svgEl("line", { class: "gl", x1: 0, y1: GROUND, x2: CELL * n, y2: GROUND }, svg);
+    panel.poses.forEach((p, i) => {
+        drawPose(svgEl("g", { transform: "translate(" + (CELL * i) + " 0)" }, svg), p);
+        if (i < n - 1) {
+            const bx = CELL * (i + 1);
+            svgEl("path", { class: "arr", d: "M" + (bx - 9) + " 78H" + (bx + 5) + "M" + (bx - 3) + " 71L" + (bx + 5) + " 78L" + (bx - 3) + " 85" }, svg);
+        }
+    });
+    return svg;
+}
+
+/* ---------- paper, colours, props menu ---------- */
+const PAPER = { a4: ["A4", 210, 297], a3: ["A3", 297, 420], letter: ["US Letter", 215.9, 279.4] };
+const SPOTS = {
+    red:    ["Red",    "#c62828"],
+    orange: ["Orange", "#d84315"],
+    blue:   ["Blue",   "#1565c0"],
+    green:  ["Green",  "#2e7d32"],
+    purple: ["Purple", "#6a1b9a"],
+    black:  ["Black",  "#151515"]
+};
+const PROP_MENU = [
+    ["kb-r", "Kettlebell, near hand",   { k: "kb", at: "r" }],
+    ["kb-l", "Kettlebell, far hand",    { k: "kb", at: "l" }],
+    ["kb-b", "Kettlebell, both hands",  { k: "kb", at: "b" }],
+    ["db-b", "Dumbbells, both hands",   { k: "db", at: "b" }],
+    ["db-r", "Dumbbell, near hand",     { k: "db", at: "r" }],
+    ["db-l", "Dumbbell, far hand",      { k: "db", at: "l" }],
+    ["bb",   "Barbell, front view",     { k: "bb", at: "b" }],
+    ["plate", "Barbell, side view",     { k: "plate", at: "b" }],
+    ["ball", "Medicine ball",           { k: "ball", at: "b" }],
+    ["bench", "Bench",                  { k: "bench", x: 70, y: 135 }],
+    ["box",  "Box",                     { k: "box", x: 110, y: 120 }],
+    ["pullbar", "Pull-up bar",          { k: "pullbar", x: 80, y: 26 }],
+    ["wall", "Wall",                    { k: "wall", x: 30, y: 12 }],
+    ["kbf",  "Kettlebell on the floor", { k: "kbf", x: 110, y: 143 }],
+    ["mat",  "Mat",                     { k: "mat" }]
+];
+const PROP_NAME = { kb: "Kettlebell", db: "Dumbbell", bb: "Barbell (front)", plate: "Barbell (side)", ball: "Medicine ball", bench: "Bench", box: "Box", kbf: "Kettlebell (floor)", pullbar: "Pull-up bar", wall: "Wall", mat: "Mat" };
+const AT_NAME = { r: "near hand", l: "far hand", b: "both hands" };
+
+/* ---------- state ---------- */
+const num = (v, lo, hi, d) => { v = Number(v); return isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d; };
+const txt = (v, n) => (typeof v === "string" || typeof v === "number") ? String(v).slice(0, n) : "";
+const has = (o, k) => Object.prototype.hasOwnProperty.call(o, k);
+const clone = o => JSON.parse(JSON.stringify(o));
+
+function blankState() {
+    return {
+        schema: APP.schema,
+        app: APP.id,
+        meta: { title: "", subtitle: "", date: today() },
+        layout: { paper: "a4", orient: "landscape", cols: 4, rows: 2, spot: "red" },
+        panels: []
+    };
+}
+let state = blankState();
+const ui = { pi: 0, qi: 0 };
+
+/* Everything read from storage or a file goes through here, so a hand-edited or
+   hostile JSON file can only ever produce a valid state. */
+function cleanProp(o) {
+    if (!o || typeof o !== "object") return null;
+    if (HELD.indexOf(o.k) >= 0) return { k: o.k, at: ["r", "l", "b"].indexOf(o.at) >= 0 ? o.at : "b" };
+    if (o.k === "mat") return { k: "mat" };
+    if (SCENE.indexOf(o.k) >= 0) return { k: o.k, x: r1(num(o.x, -40, 200, 80)), y: r1(num(o.y, -40, 200, GROUND)) };
+    return null;
+}
+function cleanPose(o) {
+    o = o && typeof o === "object" ? o : {};
+    const p = { x: r1(num(o.x, -40, 200, STAND.x)), y: r1(num(o.y, -40, 200, STAND.y)), f: o.f === -1 ? -1 : 1 };
+    ANG.forEach(k => { p[k] = r1(wrapA(num(o[k], -720, 720, STAND[k]))); });
+    p.props = (Array.isArray(o.props) ? o.props : []).slice(0, 8).map(cleanProp).filter(Boolean);
+    return p;
+}
+function cleanPanel(o) {
+    o = o && typeof o === "object" ? o : {};
+    const poses = (Array.isArray(o.poses) ? o.poses : []).slice(0, 3).map(cleanPose);
+    return {
+        name: txt(o.name, 60), sets: txt(o.sets, 8), reps: txt(o.reps, 24), time: txt(o.time, 24),
+        weight: txt(o.weight, 24), rest: txt(o.rest, 24), note: txt(o.note, 140),
+        ground: o.ground !== false,
+        poses: poses.length ? poses : [buildPose({})]
+    };
+}
+function cleanState(d) {
+    const s = blankState();
+    if (d.meta && typeof d.meta === "object") {
+        s.meta.title = txt(d.meta.title, 80);
+        s.meta.subtitle = txt(d.meta.subtitle, 120);
+        if (/^\d{4}-\d{2}-\d{2}$/.test(String(d.meta.date))) s.meta.date = d.meta.date;
+    }
+    const lo = d.layout && typeof d.layout === "object" ? d.layout : {};
+    if (has(PAPER, lo.paper)) s.layout.paper = lo.paper;
+    if (lo.orient === "portrait") s.layout.orient = "portrait";
+    s.layout.cols = Math.round(num(lo.cols, 1, 6, s.layout.cols));
+    s.layout.rows = Math.round(num(lo.rows, 1, 4, s.layout.rows));
+    if (has(SPOTS, lo.spot)) s.layout.spot = lo.spot;
+    s.panels = (Array.isArray(d.panels) ? d.panels : []).slice(0, 60).map(cleanPanel);
+    return s;
+}
+
+const LEGACY_ID = "rep-strip";   /* the tool's first name, still accepted on load */
+function persist() { store.set("state", JSON.stringify(state)); }
+function restore() {
+    let raw = store.get("state");
+    if (!raw) { try { raw = localStorage.getItem(LEGACY_ID + ":state"); } catch (e) {} }
+    if (!raw) return false;
+    try {
+        const d = JSON.parse(raw);
+        if (d && (d.app === APP.id || d.app === LEGACY_ID)) { state = cleanState(d); return true; }
+    } catch (e) {}
+    return false;
+}
+
+function saveJson() {
+    const out = clone(state);
+    out.exported = new Date().toISOString();
+    out.version = APP.version;
+    download(fname("json"), JSON.stringify(out, null, 2), "application/json");
+    notify("Saved");
+}
+function loadJson(text) {
+    let d;
+    try { d = JSON.parse(text); }
+    catch (e) { notify("That file is not valid JSON", true); return; }
+    if (!d || typeof d !== "object" || (d.app !== APP.id && d.app !== LEGACY_ID)) { notify("That is not a saved " + APP.id + " file", true); return; }
+    if (d.schema > APP.schema &&
+        !confirm("That file was saved by a newer version of this tool. Some fields may be dropped. Continue?")) return;
+    state = cleanState(d);
+    ui.pi = 0; ui.qi = 0;
+    render();
+    notify("Loaded");
+}
+function reset() {
+    if (!confirm("Clear everything and start again?")) return;
+    state = blankState();
+    ui.pi = 0; ui.qi = 0;
+    store.del("state");
+    render();
+    notify("Cleared");
+}
+
+/* ---------- library ---------- */
+const LIB = buildLib();
+const CATS = ["All"].concat(LIB.map(i => i.cat).filter((c, i, a) => a.indexOf(c) === i));
+let libCat = "All", libQ = "";
+
+function panelFromPreset(it) {
+    const d = it.def || {};
+    return {
+        name: it.name, sets: d.sets || "", reps: d.reps || "", time: d.time || "",
+        weight: d.weight || "", rest: d.rest || "", note: d.note || "", ground: true,
+        poses: clone(it.poses)
+    };
+}
+function addPanel(panel) {
+    if (state.panels.length >= 60) { notify("That is the limit for one plan", true); return; }
+    state.panels.push(panel);
+    ui.pi = state.panels.length - 1; ui.qi = 0;
+    render();
+}
+function renderLib() {
+    const host = $("#lib");
+    host.textContent = "";
+    const items = LIB.filter(i => (libCat === "All" || i.cat === libCat) && (!libQ || i.name.toLowerCase().indexOf(libQ) >= 0));
+    $("#libCount").textContent = items.length + " of " + LIB.length;
+    items.forEach(it => {
+        const b = el("button", "libitem");
+        b.type = "button";
+        b.title = "Add " + it.name + " to the plan";
+        b.setAttribute("aria-label", "Add " + it.name + " to the plan");
+        b.append(strip({ poses: it.poses, ground: true }, "thumb"), el("span", "libname", it.name), el("span", "libcat", it.cat));
+        b.addEventListener("click", () => { addPanel(panelFromPreset(it)); notify("Added " + it.name); });
+        host.append(b);
+    });
+}
+(() => {
+    const sel = $("#libCat");
+    CATS.forEach(c => { const o = el("option", null, c); o.value = c; sel.append(o); });
+    sel.addEventListener("change", () => { libCat = sel.value; renderLib(); });
+    $("#libQ").addEventListener("input", e => { libQ = e.target.value.trim().toLowerCase(); renderLib(); });
+})();
+
+/* ---------- sheet layout ---------- */
+function stats(p) {
+    const out = [], sets = p.sets.trim(), reps = p.reps.trim();
+    if (sets && reps) out.push([sets + " x " + reps, true]);
+    else if (reps) out.push([reps + " reps", true]);
+    else if (sets) out.push([sets + " sets", true]);
+    if (p.time.trim()) out.push([p.time.trim(), !out.length]);
+    if (p.weight.trim()) out.push([p.weight.trim(), false]);
+    if (p.rest.trim()) out.push(["rest " + p.rest.trim(), false]);
+    return out;
+}
+
+/* Greedy rows: a panel spans as many columns as it has poses. If the next one will
+   not fit, the previous one stretches to close the row, like a comic page. */
+function planRows(panels, cols) {
+    const rows = [];
+    let cur = [], used = 0;
+    panels.forEach((p, i) => {
+        const span = Math.min(cols, p.poses.length);
+        if (used + span > cols) {
+            cur[cur.length - 1].span += cols - used;
+            rows.push(cur); cur = []; used = 0;
+        }
+        cur.push({ i, span }); used += span;
+        if (used === cols) { rows.push(cur); cur = []; used = 0; }
+    });
+    if (cur.length) rows.push(cur);
+    return rows;
+}
+
+function buildCell(p, i, span) {
+    const c = el("div", "cell" + (i === ui.pi ? " sel" : ""));
+    c.style.gridColumn = "span " + span;
+    c.tabIndex = 0;
+    c.setAttribute("role", "button");
+    c.setAttribute("aria-label", "Panel " + (i + 1) + ", " + (p.name || "untitled") + ". Select to edit.");
+    const cap = el("div", "cap");
+    cap.append(el("span", "num", String(i + 1)), el("span", "nm", p.name || "Untitled"));
+    c.append(cap, strip(p, "strip"));
+    const ch = stats(p);
+    if (ch.length) {
+        const row = el("div", "chips");
+        ch.forEach(([t, main]) => row.append(el("span", "chip" + (main ? " main" : ""), t)));
+        c.append(row);
+    }
+    if (p.note.trim()) c.append(el("div", "cnote", p.note.trim()));
+    const pick = () => { ui.pi = i; ui.qi = 0; renderEditor(); renderSheets(); };
+    c.addEventListener("click", pick);
+    c.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pick(); } });
+    return c;
+}
+
+function renderSheets() {
+    const host = $("#sheets");
+    host.textContent = "";
+    const lo = state.layout, pp = PAPER[lo.paper];
+    const wide = lo.orient === "landscape";
+    const W = wide ? Math.max(pp[1], pp[2]) : Math.min(pp[1], pp[2]);
+    const H = wide ? Math.min(pp[1], pp[2]) : Math.max(pp[1], pp[2]);
+    const k = Math.min(W, H) / 210;
+
+    let st = $("#pageStyle");
+    st.textContent = "@page { size: " + W + "mm " + H + "mm; margin: 0; }";
+
+    const rows = planRows(state.panels, lo.cols);
+    const pages = [];
+    for (let i = 0; i < rows.length; i += lo.rows) pages.push(rows.slice(i, i + lo.rows));
+    if (!pages.length) pages.push([]);
+
+    $("#pageInfo").textContent = state.panels.length + " panel" + (state.panels.length === 1 ? "" : "s") + ", " + pages.length + " page" + (pages.length === 1 ? "" : "s");
+
+    pages.forEach((pg, n) => {
+        const sh = el("div", "sheet" + (n ? " cont" : ""));
+        sh.dataset.wmm = String(W);
+        sh.style.width = W + "mm";
+        sh.style.height = (H - 0.4) + "mm";
+        sh.style.setProperty("--k", String(k));
+        sh.style.setProperty("--spot", SPOTS[lo.spot][1]);
+
+        const head = el("div", "sh-head");
+        head.append(el("h1", "sh-title", state.meta.title.trim() || "Workout"));
+        if (state.meta.subtitle.trim() && !n) head.append(el("span", "sh-sub", state.meta.subtitle.trim()));
+        if (pages.length > 1) head.append(el("span", "sh-pg", (n + 1) + " / " + pages.length));
+        sh.append(head);
+
+        const grid = el("div", "sh-grid");
+        grid.style.gridTemplateColumns = "repeat(" + lo.cols + ", minmax(0, 1fr))";
+        grid.style.gridTemplateRows = "repeat(" + lo.rows + ", minmax(0, 1fr))";
+        pg.forEach(row => row.forEach(({ i, span }) => grid.append(buildCell(state.panels[i], i, span))));
+        sh.append(grid);
+        host.append(sh);
+    });
+    fitSheets();
+}
+function fitSheets() {
+    const host = $("#sheets");
+    const avail = host.clientWidth - 28;
+    $$(".sheet").forEach(s => {
+        const px = parseFloat(s.dataset.wmm) * 96 / 25.4;
+        s.style.zoom = String(avail > 0 ? Math.min(1, avail / px) : 1);
+    });
+}
+window.addEventListener("resize", fitSheets);
+/* The sheets cannot be measured while the Plan tab is hidden, so refit on return. */
+$("#tab-work").addEventListener("click", () => { fitSheets(); requestAnimationFrame(fitSheets); });
+
+/* ---------- editor ---------- */
+const curPanel = () => state.panels[ui.pi] || null;
+const curPose = () => { const p = curPanel(); return p ? p.poses[Math.min(ui.qi, p.poses.length - 1)] : null; };
+
+function handle(g, name, pt, kind) {
+    svgEl("circle", { cx: r1(pt[0]), cy: r1(pt[1]), r: 10, class: "h-hit", "data-h": name }, g);
+    svgEl("circle", { cx: r1(pt[0]), cy: r1(pt[1]), r: kind === "root" ? 5.5 : 4, class: "h-vis " + kind }, g);
+}
+function drawEditor() {
+    const g = $("#edG");
+    g.textContent = "";
+    const p = curPose(), panel = curPanel();
+    if (!p) return;
+    for (let i = 20; i < CELL; i += 20) {
+        svgEl("line", { class: "grid", x1: i, y1: 0, x2: i, y2: CELL }, g);
+        svgEl("line", { class: "grid", x1: 0, y1: i, x2: CELL, y2: i }, g);
+    }
+    if (panel.ground) svgEl("line", { class: "gl", x1: 0, y1: GROUND, x2: CELL, y2: GROUND }, g);
+    drawPose(g, p);
+    const s = skeleton(p);
+    p.props.forEach((o, i) => { if (o.x != null && o.k !== "mat") handle(g, "p" + i, [o.x, o.y], "prop"); });
+    handle(g, "lE", s.lE, "far"); handle(g, "lH", s.lH, "far");
+    handle(g, "lK", s.lK, "far"); handle(g, "lA", s.lA, "far");
+    handle(g, "head", s.head, "near"); handle(g, "neck", s.neck, "near");
+    handle(g, "rE", s.rE, "near"); handle(g, "rH", s.rH, "near");
+    handle(g, "rK", s.rK, "near"); handle(g, "rA", s.rA, "near");
+    handle(g, "hip", s.hip, "root");
+}
+
+function dragTo(h, q, snap) {
+    const p = curPose();
+    if (!p) return;
+    const s = skeleton(p);
+    const ang = o => {
+        let a = Math.atan2(q[0] - o[0], q[1] - o[1]) * 180 / Math.PI;
+        if (snap) a = Math.round(a / 15) * 15;
+        return r1(a);
+    };
+    if (h === "hip") { p.x = r1(num(q[0], -20, 180, p.x)); p.y = r1(num(q[1], -20, 180, p.y)); }
+    else if (h === "neck") p.t = ang(s.hip);
+    else if (h === "head") p.h = ang(s.neck);
+    else if (h === "rE") p.ra = ang(s.sho);
+    else if (h === "rH") p.rf = ang(s.rE);
+    else if (h === "lE") p.la = ang(s.sho);
+    else if (h === "lH") p.lf = ang(s.lE);
+    else if (h === "rK") p.rt = ang(s.hip);
+    else if (h === "rA") p.rs = ang(s.rK);
+    else if (h === "lK") p.lt = ang(s.hip);
+    else if (h === "lA") p.ls = ang(s.lK);
+    else if (h[0] === "p") {
+        const o = p.props[Number(h.slice(1))];
+        if (o && o.x != null) { o.x = r1(num(q[0], -20, 180, o.x)); o.y = r1(num(q[1], -20, 180, o.y)); }
+    }
+}
+
+(() => {
+    const svg = $("#edSvg");
+    let drag = null, queued = false;
+    const where = e => {
+        const m = svg.getScreenCTM();
+        if (!m) return null;
+        const pt = svg.createSVGPoint();
+        pt.x = e.clientX; pt.y = e.clientY;
+        const q = pt.matrixTransform(m.inverse());
+        return [q.x, q.y];
+    };
+    const redraw = () => {
+        if (queued) return;
+        queued = true;
+        requestAnimationFrame(() => { queued = false; drawEditor(); renderSheets(); });
+    };
+    svg.addEventListener("pointerdown", e => {
+        const h = e.target && e.target.getAttribute && e.target.getAttribute("data-h");
+        if (!h) return;
+        e.preventDefault();
+        try { svg.setPointerCapture(e.pointerId); } catch (err) {}
+        drag = h;
+    });
+    svg.addEventListener("pointermove", e => {
+        if (!drag) return;
+        const q = where(e);
+        if (!q) return;
+        dragTo(drag, q, e.shiftKey);
+        redraw();
+    });
+    const end = () => { if (drag) { drag = null; persist(); drawEditor(); } };
+    svg.addEventListener("pointerup", end);
+    svg.addEventListener("pointercancel", end);
+})();
+
+function changed() { persist(); renderSheets(); }
+function renderEditor() {
+    const p = curPanel();
+    $("#edEmpty").hidden = !!p;
+    $("#edBody").hidden = !p;
+    $("#edSub").textContent = p ? "panel " + (ui.pi + 1) + " of " + state.panels.length : "none selected";
+    if (!p) return;
+    ui.qi = Math.min(ui.qi, p.poses.length - 1);
+    [["fName", "name"], ["fSets", "sets"], ["fReps", "reps"], ["fTime", "time"], ["fWeight", "weight"], ["fRest", "rest"], ["fNote", "note"]]
+        .forEach(([id, k]) => { $("#" + id).value = p[k]; });
+    const tg = $("#tgGround");
+    tg.classList.toggle("active", p.ground);
+    tg.setAttribute("aria-checked", String(p.ground));
+
+    const tabs = $("#poseTabs");
+    tabs.textContent = "";
+    p.poses.forEach((_, i) => {
+        const b = el("button", "btn btn-sm" + (i === ui.qi ? " on" : ""), "Pose " + (i + 1));
+        b.type = "button";
+        b.setAttribute("aria-pressed", String(i === ui.qi));
+        b.addEventListener("click", () => { ui.qi = i; renderEditor(); });
+        tabs.append(b);
+    });
+    $("#poseAdd").disabled = p.poses.length >= 3;
+    $("#poseDel").disabled = p.poses.length <= 1;
+    $("#poseCopy").disabled = ui.qi === 0;
+
+    const list = $("#propList");
+    list.textContent = "";
+    const pose = curPose();
+    if (!pose.props.length) list.append(el("div", "note", "No props on this pose."));
+    pose.props.forEach((o, i) => {
+        const r = el("div", "proprow");
+        r.append(el("span", null, PROP_NAME[o.k] + (o.at ? ", " + AT_NAME[o.at] : "")));
+        const x = el("button", "btn btn-sm btn-ghost btn-danger", "Remove");
+        x.type = "button";
+        x.setAttribute("aria-label", "Remove " + PROP_NAME[o.k]);
+        x.addEventListener("click", () => { pose.props.splice(i, 1); persist(); renderEditor(); renderSheets(); });
+        r.append(x);
+        list.append(r);
+    });
+    drawEditor();
+}
+
+[["fName", "name"], ["fSets", "sets"], ["fReps", "reps"], ["fTime", "time"], ["fWeight", "weight"], ["fRest", "rest"], ["fNote", "note"]]
+    .forEach(([id, k]) => $("#" + id).addEventListener("input", e => {
+        const p = curPanel();
+        if (!p) return;
+        p[k] = e.target.value;
+        changed();
+    }));
+toggle($("#tgGround"), on => { const p = curPanel(); if (p) { p.ground = on; drawEditor(); changed(); } });
+
+const edAct = (id, fn) => $("#" + id).addEventListener("click", () => { if (curPanel()) fn(); });
+edAct("pPrev", () => { ui.pi = (ui.pi + state.panels.length - 1) % state.panels.length; ui.qi = 0; renderEditor(); renderSheets(); });
+edAct("pNext", () => { ui.pi = (ui.pi + 1) % state.panels.length; ui.qi = 0; renderEditor(); renderSheets(); });
+edAct("pUp", () => {
+    if (ui.pi < 1) return;
+    const a = state.panels; [a[ui.pi - 1], a[ui.pi]] = [a[ui.pi], a[ui.pi - 1]]; ui.pi--; persist(); renderEditor(); renderSheets();
+});
+edAct("pDown", () => {
+    const a = state.panels;
+    if (ui.pi >= a.length - 1) return;
+    [a[ui.pi + 1], a[ui.pi]] = [a[ui.pi], a[ui.pi + 1]]; ui.pi++; persist(); renderEditor(); renderSheets();
+});
+edAct("pDup", () => {
+    if (state.panels.length >= 60) { notify("That is the limit for one plan", true); return; }
+    state.panels.splice(ui.pi + 1, 0, clone(curPanel())); ui.pi++; render();
+});
+edAct("pDel", () => {
+    if (!confirm("Delete this panel?")) return;
+    state.panels.splice(ui.pi, 1); ui.pi = Math.max(0, Math.min(ui.pi, state.panels.length - 1)); ui.qi = 0; render();
+});
+edAct("poseAdd", () => {
+    const p = curPanel();
+    if (p.poses.length >= 3) return;
+    p.poses.push(clone(curPose())); ui.qi = p.poses.length - 1; persist(); renderEditor(); renderSheets();
+});
+edAct("poseDel", () => {
+    const p = curPanel();
+    if (p.poses.length <= 1) return;
+    p.poses.splice(ui.qi, 1); ui.qi = Math.max(0, ui.qi - 1); persist(); renderEditor(); renderSheets();
+});
+edAct("poseCopy", () => {
+    const p = curPanel();
+    if (ui.qi < 1) return;
+    p.poses[ui.qi] = clone(p.poses[ui.qi - 1]); persist(); renderEditor(); renderSheets();
+});
+edAct("poseMirror", () => { mirrorPose(curPose()); persist(); renderEditor(); renderSheets(); });
+edAct("poseGround", () => {
+    const pose = curPose();
+    settle(pose, pose.props.filter(o => HELD.indexOf(o.k) >= 0));
+    persist(); renderEditor(); renderSheets();
+});
+edAct("poseReset", () => {
+    const pose = curPose(), fresh = buildPose({});
+    ANG.forEach(k => { pose[k] = fresh[k]; });
+    pose.x = fresh.x; pose.y = fresh.y; pose.f = 1;
+    persist(); renderEditor(); renderSheets();
+});
+
+(() => {
+    const sel = $("#propSel");
+    PROP_MENU.forEach(([id, label]) => { const o = el("option", null, label); o.value = id; sel.append(o); });
+    $("#propAdd").addEventListener("click", () => {
+        const pose = curPose();
+        if (!pose) return;
+        if (pose.props.length >= 8) { notify("That pose has enough props", true); return; }
+        const m = PROP_MENU.filter(r => r[0] === sel.value)[0];
+        if (!m) return;
+        pose.props.push(clone(m[2]));
+        persist(); renderEditor(); renderSheets();
+    });
+})();
+
+$("#btnBlank").addEventListener("click", () => {
+    addPanel({ name: "New exercise", sets: "", reps: "", time: "", weight: "", rest: "", note: "", ground: true, poses: [buildPose({})] });
+});
+
+/* ---------- sheet settings ---------- */
+(() => {
+    const paper = $("#lPaper"), orient = $("#lOrient"), spot = $("#lSpot");
+    Object.keys(PAPER).forEach(k => { const o = el("option", null, PAPER[k][0]); o.value = k; paper.append(o); });
+    Object.keys(SPOTS).forEach(k => { const o = el("option", null, SPOTS[k][0]); o.value = k; spot.append(o); });
+    paper.addEventListener("change", () => { state.layout.paper = paper.value; changed(); });
+    orient.addEventListener("change", () => {
+        state.layout.orient = orient.value;
+        if (orient.value === "portrait") { state.layout.cols = 2; state.layout.rows = 3; }
+        else { state.layout.cols = 4; state.layout.rows = 2; }
+        $("#lCols").value = state.layout.cols; $("#lRows").value = state.layout.rows;
+        changed();
+    });
+    spot.addEventListener("change", () => { state.layout.spot = spot.value; changed(); });
+    [["lCols", "cols", 1, 6], ["lRows", "rows", 1, 4]].forEach(([id, k, lo, hi]) =>
+        $("#" + id).addEventListener("input", e => {
+            if (e.target.value === "") return;
+            state.layout[k] = Math.round(num(e.target.value, lo, hi, state.layout[k]));
+            changed();
+        }));
+    [["#mTitle", "title"], ["#mSub", "subtitle"]].forEach(([sel, key]) => {
+        $(sel).addEventListener("input", e => { state.meta[key] = e.target.value; changed(); });
+    });
+})();
+
+/* ---------- render ---------- */
+function render() {
+    $("#mTitle").value = state.meta.title;
+    $("#mSub").value = state.meta.subtitle;
+    $("#lPaper").value = state.layout.paper;
+    $("#lOrient").value = state.layout.orient;
+    $("#lCols").value = state.layout.cols;
+    $("#lRows").value = state.layout.rows;
+    $("#lSpot").value = state.layout.spot;
+    if (ui.pi >= state.panels.length) ui.pi = Math.max(0, state.panels.length - 1);
+    renderEditor();
+    renderSheets();
+    persist();
+}
+
+/* ---------- toolbar ---------- */
+$("#btnSave").addEventListener("click", saveJson);
+$("#btnLoad").addEventListener("click", () => $("#fileIn").click());
+$("#fileIn").addEventListener("change", e => {
+    if (e.target.files[0]) read(e.target.files[0], loadJson);
+    e.target.value = "";
+});
+$("#btnPrint").addEventListener("click", () => window.print());
+$("#btnReset").addEventListener("click", reset);
+
+/* The browser uses the page title as the default PDF file name. */
+let titleWas = "";
+window.addEventListener("beforeprint", () => { titleWas = document.title; document.title = fname("pdf").slice(0, -4); });
+window.addEventListener("afterprint", () => { if (titleWas) document.title = titleWas; });
+
+document.addEventListener("keydown", e => {
+    if (!(e.ctrlKey || e.metaKey)) return;
+    const k = e.key.toLowerCase();
+    if (k === "s") { e.preventDefault(); saveJson(); }
+    if (k === "o") { e.preventDefault(); $("#fileIn").click(); }
+});
+
+/* ---------- version, in the footer only ---------- */
+$("#footVer").textContent = "v" + APP.version;
+
+renderLib();
+if (!restore()) {
+    state.meta.title = "Workout A";
+    state.meta.subtitle = "Full body, about 30 minutes";
+    ["squat", "push-up", "plank"].forEach(id => {
+        const it = LIB.filter(x => x.id === id)[0];
+        if (it) state.panels.push(panelFromPreset(it));
+    });
+}
+render();
+</script>
+</body>
+</html>
