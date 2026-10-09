@@ -2594,11 +2594,14 @@ function drawAware(g, o, s, f) {
         svgEl("circle", { class: "solid", cx: r1(cx), cy: r1(cy), r: 2.2 }, g);
     } else if (o.k === "ropeup" || o.k === "ropedown") {
         const d = f === -1 ? -1 : 1, H = s.rH;
-        /* the loop clears the head by a few units overhead, and just brushes the ground under the feet */
-        const end = GROUND - 2, top = s.head[1] - L.head - 7, c = (8 * top - H[1] - end) / 6;
+        /* Overhead: up from the hands, over the head by a few units, then back and down at about 45 degrees,
+           stopping behind the shoulders. Under the feet: it just brushes the ground. */
+        const xy = q => r1(q[0]) + "," + r1(q[1]), top = s.head[1] - L.head - 7;
+        const A = [hx - d * 5, top], E = [hx - d * 40, top + 38];
         const path = o.k === "ropeup"
-            ? "M" + r1(H[0]) + "," + r1(H[1]) + "C" + r1(H[0] - d * 3) + "," + r1(c) + " " + r1(hx - d * 30) + "," + r1(c) + " " + r1(hx - d * 24) + "," + r1(end)
-            : "M" + r1(H[0]) + "," + r1(H[1]) + "C" + r1(H[0] + d * 20) + "," + r1(H[1] + 10) + " " + r1(H[0] + d * 22) + "," + r1(GROUND) + " " + r1(hx - d * 8) + "," + r1(GROUND - 1);
+            ? "M" + xy(H) + "C" + xy([H[0], H[1] - (H[1] - top) * 0.6]) + " " + xy([A[0] + d * 16, top]) + " " + xy(A)
+                + "C" + xy([A[0] - d * 14, top]) + " " + xy([E[0] + d * 9, E[1] - 9]) + " " + xy(E)
+            : "M" + xy(H) + "C" + xy([H[0] + d * 20, H[1] + 10]) + " " + xy([H[0] + d * 22, GROUND]) + " " + xy([hx - d * 8, GROUND - 1]);
         svgEl("path", { class: "ln thin", d: path }, g);
         [s.rH, s.lH].forEach(h => svgEl("circle", { class: "solid", cx: r1(h[0]), cy: r1(h[1]), r: 2.2 }, g));
     }
