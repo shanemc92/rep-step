@@ -41,7 +41,7 @@ Poses are stored as joint angles on a skeleton with fixed bone lengths, so every
 | Centre and ground | Rests the lowest point on the ground line and centres the figure |
 | Copy previous pose | Starts this pose from the one before it |
 
-Props: kettlebell, dumbbell, barbell (front or side view), medicine ball, bench, box, pull-up bar, wall and mat. Held props follow the hand. Scenery props have a dot you can drag.
+Props: kettlebell, dumbbell, barbell (front or side view), medicine ball, bench, box, pull-up bar, wall and mat, plus a rowing machine, an exercise bike and a skipping rope (overhead or under the feet). Held props follow the hand. Scenery props have a dot you can drag. The machines and the rope have no dot: they are drawn from the figure's hips, hands and feet, so they stay attached when you edit the pose.
 
 ## PDF
 
@@ -65,7 +65,7 @@ Panels are placed left to right. If the next panel will not fit in the row, the 
 
 ## Library
 
-125 starter exercises in ten categories: Kettlebell (46, including double-bell work, carries, Turkish get-up, snatch, windmill, halo, around the world, side swing and wood chop), Dumbbell, Barbell, Legs, Push, Pull, Core (with Pilates hundred and roll-up), Cardio, Stretch (with yoga poses such as downward dog, chair and tree) and Mobility (with thread the needle and deep squat). Filter by category or search by name. They live in `LIB_SRC` as plain angle objects, and `buildLib()` grounds and centres each one. To add an exercise, copy an entry and change the angles. Poses are approximations, so expect to nudge some in the editor. The least convincing are the floor poses (child's pose, sit-up, hollow and V-sit holds, knees to chest, thread the needle), side plank and step-up.
+130 starter exercises in ten categories: Kettlebell (46, including double-bell work, carries, Turkish get-up, snatch, windmill, halo, around the world, side swing and wood chop), Dumbbell, Barbell, Legs, Push, Pull, Core (with single-leg raise, Pilates hundred and roll-up), Cardio (with running, jump rope, spinning and the rowing machine), Stretch (with yoga poses such as downward dog, chair and tree) and Mobility (with thread the needle and deep squat). Filter by category or search by name. They live in `LIB_SRC` as plain angle objects, and `buildLib()` grounds and centres each one. To add an exercise, copy an entry and change the angles. Poses are approximations, so expect to nudge some in the editor. The least convincing are the floor poses (child's pose, sit-up, hollow and V-sit holds, knees to chest, thread the needle), side plank and step-up.
 
 ## Known gaps
 

@@ -1961,6 +1961,10 @@ const ANG = ["t", "h", "ra", "rf", "la", "lf", "rt", "rs", "lt", "ls"];
 const STAND = { x: 80, y: 106, f: 1, t: 180, h: 180, ra: 6, rf: 6, la: 4, lf: 4, rt: 3, rs: 3, lt: -3, ls: -3 };
 const HELD = ["kb", "db", "bb", "plate", "ball"];
 const SCENE = ["bench", "box", "pullbar", "mat", "wall"];
+/* Machines and the skipping rope. They have no position of their own: they are drawn from the figure's hips,
+   hands and feet, so they stay attached however the pose is edited. */
+const AWARE = ["rower", "bike", "ropeup", "ropedown"];
+const isScene = o => SCENE.indexOf(o.k) >= 0 || AWARE.indexOf(o.k) >= 0;
 
 const rad = a => a * Math.PI / 180;
 const at = (o, a, n) => [o[0] + Math.sin(rad(a)) * n, o[1] + Math.cos(rad(a)) * n];
@@ -2024,7 +2028,7 @@ function settle(p, held, air) {
 
 function resolveProp(o, p) {
     if (HELD.indexOf(o.k) >= 0) return { k: o.k, at: o.at || "b" };
-    if (o.k === "mat") return { k: "mat" };
+    if (o.k === "mat" || AWARE.indexOf(o.k) >= 0) return { k: o.k };
     const s = skeleton(p);
     let x = o.x != null ? o.x : 80, y = o.y != null ? o.y : GROUND;
     if (o.hand) { x = s.rH[0] + (o.ox || 0); y = s.rH[1]; }
@@ -2428,6 +2432,9 @@ const LIB_SRC = [
     { id: "leg-raise", name: "Leg raise", cat: "Core", def: { sets: "3", reps: "12", rest: "45 s" }, poses: [
         { t: -90, h: -90, rt: 90, rs: 90, lt: 90, ls: 90, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] },
         { t: -90, h: -90, rt: 175, rs: 178, lt: 173, ls: 176, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
+    { id: "single-leg-raise", name: "Single-leg raise", cat: "Core", def: { sets: "3", reps: "10 each leg", rest: "45 s" }, poses: [
+        { t: -90, h: -90, rt: 172, rs: 172, lt: 88, ls: 88, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] },
+        { t: -90, h: -90, rt: 88, rs: 88, lt: 172, ls: 172, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
     { id: "dead-bug", name: "Dead bug", cat: "Core", def: { sets: "3", reps: "10 each side", rest: "30 s" }, poses: [
         P(LYING, LG.tabletop, { ra: 180, rf: 180, la: 178, lf: 178, props: [MAT] }),
         P(LYING, { rt: 130, rs: 40, lt: 100, ls: 100, ra: -105, rf: -105, la: 178, lf: 178, props: [MAT] })] },
@@ -2478,6 +2485,19 @@ const LIB_SRC = [
     { id: "jab-cross", name: "Jab and cross", cat: "Cardio", def: { sets: "3", time: "45 s", rest: "30 s" }, poses: [
         { t: 175, h: 175, rt: 25, rs: 5, lt: -20, ls: -5, la: 88, lf: 88, ra: 25, rf: 150 },
         { t: 172, h: 175, rt: 25, rs: 5, lt: -20, ls: -5, ra: 90, rf: 90, la: 25, lf: 150 }] },
+    { id: "running", name: "Running", cat: "Cardio", def: { sets: "1", time: "20 min" }, poses: [
+        { air: 6, t: 172, h: 176, rt: 55, rs: -15, lt: -30, ls: -70, ra: -55, rf: -15, la: 45, lf: 110 },
+        { air: 6, t: 172, h: 176, lt: 55, ls: -15, rt: -30, rs: -70, la: -55, lf: -15, ra: 45, rf: 110 }] },
+    { id: "jump-rope", name: "Jump rope", cat: "Cardio", def: { sets: "5", time: "60 s", rest: "30 s" }, poses: [
+        P(LG.front, { ra: 12, rf: 72, la: 10, lf: 70, props: [{ k: "ropeup" }] }),
+        P({ air: 6, ra: 12, rf: 72, la: 10, lf: 70, rt: 8, rs: -22, lt: 4, ls: -26, props: [{ k: "ropedown" }] })] },
+    { id: "spin-bike", name: "Spinning", cat: "Cardio", def: { sets: "1", time: "30 min", note: "Seated climb, steady cadence" }, poses: [
+        { air: 8, t: 135, h: 150, rt: 85, rs: -2, lt: 42, ls: -10, ra: 21, rf: 90, la: 19, lf: 88, props: [{ k: "bike" }] },
+        { air: 8, t: 135, h: 150, rt: 42, rs: -10, lt: 85, ls: -2, ra: 21, rf: 90, la: 19, lf: 88, props: [{ k: "bike" }] }] },
+    { id: "rowing-machine", name: "Rowing machine", cat: "Cardio", def: { sets: "4", time: "2 min", rest: "60 s", note: "Legs, then body, then arms" }, poses: [
+        { air: 12, t: 138, h: 150, rt: 128, rs: 12, lt: 124, ls: 10, ra: 98, rf: 92, la: 96, lf: 90, props: [{ k: "rower" }] },
+        { air: 12, t: 166, h: 172, rt: 108, rs: 55, lt: 106, ls: 53, ra: 70, rf: 68, la: 68, lf: 66, props: [{ k: "rower" }] },
+        { air: 12, t: -165, h: -172, rt: 85, rs: 80, lt: 83, ls: 78, ra: -40, rf: 95, la: -42, lf: 93, props: [{ k: "rower" }] }] },
 
     /* ---------- Stretch ---------- */
     { id: "quad-stretch", name: "Quad stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side" }, poses: [
@@ -2544,7 +2564,46 @@ function svgEl(tag, attrs, parent) {
 }
 const pts = arr => arr.map(q => r1(q[0]) + "," + r1(q[1])).join(" ");
 
-function drawScene(g, o) {
+function drawAware(g, o, s, f) {
+    const ln = (x1, y1, x2, y2, c) => svgEl("line", { class: c || "ln thin", x1: r1(x1), y1: r1(y1), x2: r1(x2), y2: r1(y2) }, g);
+    const hx = s.hip[0], hy = s.hip[1];
+    if (o.k === "rower") {
+        const d = s.rA[0] >= hx ? 1 : -1, rail = GROUND - 6, fx = s.rA[0], fly = [fx + d * 28, rail - 14];
+        ln(hx - d * 46, rail, fly[0] + d * 14, rail);                                  /* rail */
+        [hx - d * 46, fly[0] + d * 14].forEach(x => ln(x, rail, x, GROUND));            /* feet of the machine */
+        svgEl("rect", { class: "solid", x: r1(hx - 8), y: r1(hy + 3), width: 16, height: 3.5, rx: 1.5 }, g);   /* seat */
+        ln(hx, hy + 7, hx, rail);
+        ln(s.rA[0] - d * 7, s.rA[1] + 4, s.rT[0] + d * 4, s.rT[1] + 2, "ln mid");      /* foot plate */
+        ln(fx, s.rA[1] + 5, fx, rail);
+        svgEl("circle", { class: "ln thin", cx: r1(fly[0]), cy: r1(fly[1]), r: 14 }, g);               /* flywheel */
+        svgEl("circle", { class: "solid", cx: r1(fly[0]), cy: r1(fly[1]), r: 2.4 }, g);
+        ln(fly[0], fly[1] - 14, s.rH[0], s.rH[1]);                                     /* chain to the handle */
+        ln(s.rH[0], s.rH[1] - 4.5, s.rH[0], s.rH[1] + 4.5, "ln mid");
+    } else if (o.k === "bike") {
+        const d = s.rH[0] >= hx ? 1 : -1, cx = (s.rA[0] + s.lA[0]) / 2, cy = (s.rA[1] + s.lA[1]) / 2;
+        const fly = [cx + d * 22, cy + 2], base = GROUND - 1.5;
+        svgEl("rect", { class: "solid", x: r1(hx - 9 - d * 2), y: r1(hy + 3), width: 15, height: 3.2, rx: 1.5 }, g);   /* saddle */
+        ln(hx - d * 3, hy + 6.5, cx, cy);                                              /* seat post to the cranks */
+        ln(cx, cy, fly[0], fly[1]);
+        ln(fly[0], fly[1], s.rH[0] - d * 2, s.rH[1] + 3);                              /* stem up to the bars */
+        ln(s.rH[0] - d * 5, s.rH[1] + 2.5, s.rH[0] + d * 4, s.rH[1] + 2.5, "ln mid");
+        svgEl("circle", { class: "ln thin", cx: r1(fly[0]), cy: r1(fly[1]), r: 13 }, g);                /* flywheel */
+        ln(cx - d * 30, base, fly[0] + d * 16, base);
+        ln(cx, cy, cx - d * 8, base); ln(fly[0], fly[1], fly[0], base);
+        ln(cx, cy, s.rA[0], s.rA[1]); ln(cx, cy, s.lA[0], s.lA[1]);                    /* cranks */
+        svgEl("circle", { class: "solid", cx: r1(cx), cy: r1(cy), r: 2.2 }, g);
+    } else if (o.k === "ropeup" || o.k === "ropedown") {
+        const d = f === -1 ? -1 : 1, H = s.rH;
+        const path = o.k === "ropeup"
+            ? "M" + r1(H[0]) + "," + r1(H[1]) + "C" + r1(H[0] - d * 6) + "," + r1(H[1] - 78) + " " + r1(hx - d * 40) + "," + r1(hy - 84) + " " + r1(hx - d * 36) + "," + r1(GROUND - 3)
+            : "M" + r1(H[0]) + "," + r1(H[1]) + "C" + r1(H[0] + d * 34) + "," + r1(H[1] + 6) + " " + r1(H[0] + d * 40) + "," + r1(GROUND + 10) + " " + r1(hx - d * 34) + "," + r1(GROUND - 2);
+        svgEl("path", { class: "ln thin", d: path }, g);
+        [s.rH, s.lH].forEach(h => svgEl("circle", { class: "solid", cx: r1(h[0]), cy: r1(h[1]), r: 2.2 }, g));
+    }
+}
+
+function drawScene(g, o, s, f) {
+    if (AWARE.indexOf(o.k) >= 0) { drawAware(g, o, s, f); return; }
     if (o.k === "bench") {
         svgEl("rect", { class: "solid", x: o.x - 42, y: o.y, width: 84, height: 4, rx: 1.5 }, g);
         svgEl("line", { class: "ln thin", x1: o.x - 34, y1: o.y + 4, x2: o.x - 34, y2: GROUND }, g);
@@ -2593,7 +2652,7 @@ function drawHeld(g, o, s) {
 
 function drawPose(g, p) {
     const s = skeleton(p);
-    p.props.filter(o => SCENE.indexOf(o.k) >= 0).forEach(o => drawScene(g, o));
+    p.props.filter(isScene).forEach(o => drawScene(g, o, s, p.f));
     const far = svgEl("g", { opacity: "0.5" }, g);
     svgEl("polyline", { class: "ln", points: pts([s.hip, s.lK, s.lA, s.lT]) }, far);
     svgEl("polyline", { class: "ln", points: pts([s.sho, s.lE, s.lH]) }, far);
@@ -2672,7 +2731,7 @@ const drawOutline = (() => {
 
     return function (g, p) {
         const S = skeleton(p), B = MAN, f = p.f;
-        p.props.filter(o => SCENE.indexOf(o.k) >= 0).forEach(o => drawScene(g, o));
+        p.props.filter(isScene).forEach(o => drawScene(g, o, S, f));
         const foot = (a, t) => { const d = dir(a, t); return limb(sub(a, mul(d, 1.8)), add(t, mul(d, 3.2)), [[0, 4.8], [0.45, 4.0], [1, 2.2]]); };
         const hand = (e, h) => { const d = dir(e, h); return limb(sub(h, mul(d, 0.6)), add(h, mul(d, 4.2)), [[0, 3.6], [0.4, 3.9], [1, 2.2]]); };
         const leg = (k, a, t) => [limb(S.hip, k, B.thigh), limb(k, a, B.shin), foot(a, t), disc(k, B.shin[0][1] / 2 - 0.2), disc(a, B.shin[3][1] / 2 + 0.3)];
@@ -2749,9 +2808,13 @@ const PROP_MENU = [
     ["pullbar", "Pull-up bar",          { k: "pullbar", x: 80, y: 26 }],
     ["wall", "Wall",                    { k: "wall", x: 30, y: 12 }],
     ["kbf",  "Kettlebell on the floor", { k: "kbf", x: 110, y: 143 }],
-    ["mat",  "Mat",                     { k: "mat" }]
+    ["mat",  "Mat",                     { k: "mat" }],
+    ["rower", "Rowing machine",         { k: "rower" }],
+    ["bike", "Exercise bike",           { k: "bike" }],
+    ["ropeup", "Skipping rope, overhead", { k: "ropeup" }],
+    ["ropedown", "Skipping rope, under the feet", { k: "ropedown" }]
 ];
-const PROP_NAME = { kb: "Kettlebell", db: "Dumbbell", bb: "Barbell (front)", plate: "Barbell (side)", ball: "Medicine ball", bench: "Bench", box: "Box", kbf: "Kettlebell (floor)", pullbar: "Pull-up bar", wall: "Wall", mat: "Mat" };
+const PROP_NAME = { kb: "Kettlebell", db: "Dumbbell", bb: "Barbell (front)", plate: "Barbell (side)", ball: "Medicine ball", bench: "Bench", box: "Box", kbf: "Kettlebell (floor)", pullbar: "Pull-up bar", wall: "Wall", mat: "Mat", rower: "Rowing machine", bike: "Exercise bike", ropeup: "Skipping rope (overhead)", ropedown: "Skipping rope (under the feet)" };
 const AT_NAME = { r: "near hand", l: "far hand", b: "both hands" };
 
 /* ---------- state ---------- */
@@ -2777,7 +2840,7 @@ const ui = { pi: 0, qi: 0 };
 function cleanProp(o) {
     if (!o || typeof o !== "object") return null;
     if (HELD.indexOf(o.k) >= 0) return { k: o.k, at: ["r", "l", "b"].indexOf(o.at) >= 0 ? o.at : "b" };
-    if (o.k === "mat") return { k: "mat" };
+    if (o.k === "mat" || AWARE.indexOf(o.k) >= 0) return { k: o.k };
     if (SCENE.indexOf(o.k) >= 0) return { k: o.k, x: r1(num(o.x, -40, 200, 80)), y: r1(num(o.y, -40, 200, GROUND)) };
     return null;
 }
