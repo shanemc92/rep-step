@@ -1373,6 +1373,7 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
                 <label class="f">Columns<input type="number" class="field" id="lCols" min="1" max="6" step="1"></label>
                 <label class="f">Rows per page<input type="number" class="field" id="lRows" min="1" max="4" step="1"></label>
                 <label class="f">Accent ink<select class="field" id="lSpot"></select></label>
+                <label class="f">Figure<select class="field" id="lFig"></select></label>
             </div>
         </div>
 
@@ -1464,7 +1465,7 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
         <div class="panel">
             <div class="panel-head"><h2>About</h2></div>
             <div class="prose">
-                Builds a workout as a comic strip of stick figures, for printing and sticking on a wall. Each
+                Builds a workout as a comic strip of stick figures (or outline figures), for printing and sticking on a wall. Each
                 panel is one exercise with one, two or three poses, plus sets, reps, time, weight and rest.
                 Start from a preset in the library and adjust it, or pose a figure from scratch.
                 Everything runs in this tab. There is no network call and no analytics.
@@ -1523,7 +1524,7 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
 "use strict";
 
 /* ---------- app identity ---------- */
-const APP = { id: "rep-step", version: "0.2.0", schema: 1 };
+const APP = { id: "rep-step", version: "0.3.0", schema: 1 };
 
 /* ---------- dom helpers ---------- */
 const $  = s => document.querySelector(s);
@@ -2602,13 +2603,117 @@ function drawPose(g, p) {
     p.props.filter(o => HELD.indexOf(o.k) >= 0).forEach(o => drawHeld(g, o, s));
 }
 
+/* ---------- outline figure ----------
+   The same skeleton as the stick figure, wrapped in a faceless mannequin. Each body part is a smooth
+   tapered shape. All the shapes of a group are stroked dark and then painted white on top, so the
+   group reads as one silhouette with a single outline. Far limbs go behind, lighter, and the near arm
+   goes in front with its own edge. Props, scenery and the ground line are drawn exactly as for sticks. */
+const drawOutline = (() => {
+    /* width profiles are [position along the bone 0..1, full width]; torso rows are [along the torso, offset forward of the spine] */
+    const MAN = {
+        thigh: [[0, 12.4], [0.25, 11.8], [0.6, 8.8], [1, 6.8]],
+        shin: [[0, 6.8], [0.22, 7.4], [0.6, 5.2], [1, 3.6]],
+        arm: [[0, 6.0], [0.3, 6.1], [1, 4.8]],
+        fore: [[0, 4.8], [0.2, 5.1], [1, 3.2]],
+        neck: 6.2,
+        front: [[-0.08, 4.2], [0.08, 5.4], [0.28, 5.0], [0.5, 6.4], [0.66, 7.6], [0.84, 6.2], [1.0, 3.6]],
+        back: [[1.0, -4.2], [0.84, -5.8], [0.66, -6.0], [0.45, -5.2], [0.28, -5.0], [0.12, -5.4], [-0.04, -4.8]],
+        bum: [3.2, 5.4]
+    };
+    const OW = 1.1;
+    const sub = (a, b) => [a[0] - b[0], a[1] - b[1]];
+    const add = (a, b) => [a[0] + b[0], a[1] + b[1]];
+    const mul = (a, k) => [a[0] * k, a[1] * k];
+    const dir = (a, b) => unit(b, a);
+    const f2 = q => r1(q[0]) + "," + r1(q[1]);
+
+    function width(prof, t) {
+        for (let i = 0; i < prof.length - 1; i++) {
+            const a = prof[i], b = prof[i + 1];
+            if (t <= b[0]) { const u = (t - a[0]) / ((b[0] - a[0]) || 1); return a[1] + (b[1] - a[1]) * u * u * (3 - 2 * u); }
+        }
+        return prof[prof.length - 1][1];
+    }
+    /* a tapered tube from a to b with a rounded end, as a closed point list */
+    function limb(a, b, prof) {
+        const d = dir(a, b), n = [-d[1], d[0]], N = 12, left = [], right = [];
+        for (let i = 0; i <= N; i++) {
+            const t = i / N, w = width(prof, t) / 2, c = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+            left.push(add(c, mul(n, w))); right.push(sub(c, mul(n, w)));
+        }
+        const w0 = width(prof, 0) / 2, w1 = width(prof, 1) / 2;
+        return { poly: left.concat([add(b, mul(d, w1 * 0.8))], right.reverse(), [sub(a, mul(d, w0 * 0.8))]) };
+    }
+    const disc = (c, r) => ({ c, r });
+    /* closed Catmull-Rom curve through the points, as a cubic Bezier path */
+    function smooth(pts) {
+        const n = pts.length;
+        let d = "M" + f2(pts[0]);
+        for (let i = 0; i < n; i++) {
+            const p0 = pts[(i - 1 + n) % n], p1 = pts[i], p2 = pts[(i + 1) % n], p3 = pts[(i + 2) % n];
+            const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+            const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+            d += "C" + f2(c1) + " " + f2(c2) + " " + f2(p2);
+        }
+        return d + "Z";
+    }
+    function shape(sh, attrs, g) {
+        if (sh.r != null) return svgEl("circle", Object.assign({ cx: r1(sh.c[0]), cy: r1(sh.c[1]), r: sh.r }, attrs), g);
+        return svgEl("path", Object.assign({ d: smooth(sh.poly) }, attrs), g);
+    }
+    function group(g, shapes, extra) {
+        const q = svgEl("g", extra || {}, g);
+        shapes.forEach(sh => shape(sh, { fill: "var(--ink)", stroke: "var(--ink)", "stroke-width": 2 * OW, "stroke-linejoin": "round" }, q));
+        shapes.forEach(sh => shape(sh, { fill: "var(--paper)", stroke: "none" }, q));
+    }
+    const fine = (g, d) => svgEl("path", { d, fill: "none", stroke: "var(--ink)", "stroke-width": 0.7, "stroke-linecap": "round", opacity: "0.8" }, g);
+
+    return function (g, p) {
+        const S = skeleton(p), B = MAN, f = p.f;
+        p.props.filter(o => SCENE.indexOf(o.k) >= 0).forEach(o => drawScene(g, o));
+        const foot = (a, t) => { const d = dir(a, t); return limb(sub(a, mul(d, 1.8)), add(t, mul(d, 3.2)), [[0, 4.8], [0.45, 4.0], [1, 2.2]]); };
+        const hand = (e, h) => { const d = dir(e, h); return limb(sub(h, mul(d, 0.6)), add(h, mul(d, 4.2)), [[0, 3.6], [0.4, 3.9], [1, 2.2]]); };
+        const leg = (k, a, t) => [limb(S.hip, k, B.thigh), limb(k, a, B.shin), foot(a, t), disc(k, B.shin[0][1] / 2 - 0.2), disc(a, B.shin[3][1] / 2 + 0.3)];
+        const arm = (e, h) => [limb(S.sho, e, B.arm), limb(e, h, B.fore), disc(S.sho, B.arm[0][1] / 2), disc(e, B.fore[0][1] / 2 - 0.1), hand(e, h)];
+        group(g, leg(S.lK, S.lA, S.lT).concat(arm(S.lE, S.lH)), { opacity: "0.5" });
+
+        /* torso in its own frame: s runs hip to neck, off is forward of the spine */
+        const u = dir(S.hip, S.neck), n = mul([-u[1], u[0]], f);
+        const at = (s, off) => add(add(S.hip, mul(u, s * L.torso)), mul(n, off));
+        const torso = { poly: B.front.map(r => at(r[0], r[1])).concat(B.back.map(r => at(r[0], r[1])), [at(-0.16, 0)]) };
+
+        /* faceless egg head: a is forward, b is up */
+        const uh = dir(S.neck, S.head), nh = mul([-uh[1], uh[0]], f);
+        const H = (a, b) => add(add(S.head, mul(nh, a)), mul(uh, b - 0.2));
+        const skull = { poly: [[-7.6, 1.0], [-6.9, 6.0], [-2.6, 9.2], [2.8, 9.0], [6.4, 6.0], [7.6, 1.6], [7.6, -2.6], [6.8, -6.2], [4.4, -8.0], [0.4, -6.6], [-3.2, -5.2], [-6.2, -3.2]].map(q => H(q[0], q[1])) };
+        const neck = limb(S.neck, H(-1.4, -4.2), [[0, B.neck - 0.2], [0.5, B.neck - 0.9], [1, B.neck - 0.2]]);
+
+        /* the pelvis frame sits between the torso and the thighs, so the bum stays under the hips whatever the lean */
+        const td = dir(S.hip, S.rK), pu = dir(td, u), pn = mul([-pu[1], pu[0]], f);
+        const bum = disc(add(S.hip, sub(mul(pn, -B.bum[0]), mul(pu, -0.4))), B.bum[1]);
+        group(g, [torso, disc(S.hip, 6.0), bum].concat(leg(S.rK, S.rA, S.rT), [neck, skull]));
+
+        /* clothing: a waistband and a shorts hem */
+        fine(g, "M" + f2(at(0.04, 5.4)) + "Q" + f2(at(0.0, 0)) + " " + f2(at(0.04, -6.4)));
+        const hem = add(S.hip, mul(td, L.th * 0.55)), tn = [-td[1], td[0]];
+        fine(g, "M" + f2(add(hem, mul(tn, 4.4))) + "L" + f2(sub(hem, mul(tn, 4.4))));
+
+        group(g, arm(S.rE, S.rH));
+        p.props.filter(o => HELD.indexOf(o.k) >= 0).forEach(o => drawHeld(g, o, S));
+    };
+})();
+
+/* The figure style is a sheet setting. Thumbnails and the editor always draw sticks, so the drag dots sit on the bones. */
+const FIGURES = [["stick", "Stick figure"], ["outline", "Outline"]];
+function drawFigure(g, p, fig) { (fig === "outline" ? drawOutline : drawPose)(g, p); }
+
 /* A whole panel: its poses side by side on one ground line, with arrows between. */
-function strip(panel, cls) {
+function strip(panel, cls, fig) {
     const n = panel.poses.length;
     const svg = svgEl("svg", { viewBox: "0 0 " + (CELL * n) + " " + CELL, class: cls || "strip", "aria-hidden": "true" });
     if (panel.ground) svgEl("line", { class: "gl", x1: 0, y1: GROUND, x2: CELL * n, y2: GROUND }, svg);
     panel.poses.forEach((p, i) => {
-        drawPose(svgEl("g", { transform: "translate(" + (CELL * i) + " 0)" }, svg), p);
+        drawFigure(svgEl("g", { transform: "translate(" + (CELL * i) + " 0)" }, svg), p, fig);
         if (i < n - 1) {
             const bx = CELL * (i + 1);
             svgEl("path", { class: "arr", d: "M" + (bx - 9) + " 78H" + (bx + 5) + "M" + (bx - 3) + " 71L" + (bx + 5) + " 78L" + (bx - 3) + " 85" }, svg);
@@ -2658,7 +2763,7 @@ function blankState() {
         schema: APP.schema,
         app: APP.id,
         meta: { title: "", subtitle: "", date: today() },
-        layout: { paper: "a4", orient: "landscape", cols: 4, rows: 2, spot: "red" },
+        layout: { paper: "a4", orient: "landscape", cols: 4, rows: 2, spot: "red", figure: "stick" },
         panels: []
     };
 }
@@ -2704,6 +2809,7 @@ function cleanState(d) {
     s.layout.cols = Math.round(num(lo.cols, 1, 6, s.layout.cols));
     s.layout.rows = Math.round(num(lo.rows, 1, 4, s.layout.rows));
     if (has(SPOTS, lo.spot)) s.layout.spot = lo.spot;
+    if (FIGURES.some(r => r[0] === lo.figure)) s.layout.figure = lo.figure;
     s.panels = (Array.isArray(d.panels) ? d.panels : []).slice(0, 60).map(cleanPanel);
     return s;
 }
@@ -2828,7 +2934,7 @@ function buildCell(p, i, span) {
     c.setAttribute("aria-label", "Panel " + (i + 1) + ", " + (p.name || "untitled") + ". Select to edit.");
     const cap = el("div", "cap");
     cap.append(el("span", "num", String(i + 1)), el("span", "nm", p.name || "Untitled"));
-    c.append(cap, strip(p, "strip"));
+    c.append(cap, strip(p, "strip", state.layout.figure));
     const ch = stats(p);
     if (ch.length) {
         const row = el("div", "chips");
@@ -3107,9 +3213,10 @@ $("#btnBlank").addEventListener("click", () => {
 
 /* ---------- sheet settings ---------- */
 (() => {
-    const paper = $("#lPaper"), orient = $("#lOrient"), spot = $("#lSpot");
+    const paper = $("#lPaper"), orient = $("#lOrient"), spot = $("#lSpot"), fig = $("#lFig");
     Object.keys(PAPER).forEach(k => { const o = el("option", null, PAPER[k][0]); o.value = k; paper.append(o); });
     Object.keys(SPOTS).forEach(k => { const o = el("option", null, SPOTS[k][0]); o.value = k; spot.append(o); });
+    FIGURES.forEach(r => { const o = el("option", null, r[1]); o.value = r[0]; fig.append(o); });
     paper.addEventListener("change", () => { state.layout.paper = paper.value; changed(); });
     orient.addEventListener("change", () => {
         state.layout.orient = orient.value;
@@ -3119,6 +3226,7 @@ $("#btnBlank").addEventListener("click", () => {
         changed();
     });
     spot.addEventListener("change", () => { state.layout.spot = spot.value; changed(); });
+    fig.addEventListener("change", () => { state.layout.figure = fig.value; changed(); });
     [["lCols", "cols", 1, 6], ["lRows", "rows", 1, 4]].forEach(([id, k, lo, hi]) =>
         $("#" + id).addEventListener("input", e => {
             if (e.target.value === "") return;
@@ -3139,6 +3247,7 @@ function render() {
     $("#lCols").value = state.layout.cols;
     $("#lRows").value = state.layout.rows;
     $("#lSpot").value = state.layout.spot;
+    $("#lFig").value = state.layout.figure;
     if (ui.pi >= state.panels.length) ui.pi = Math.max(0, state.panels.length - 1);
     renderEditor();
     renderSheets();

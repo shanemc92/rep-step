@@ -14,8 +14,16 @@ The sheet that prints, page 1 of a two page plan (A4 landscape, four columns, tw
 
 1. Pick an exercise from the library to add a panel, or add a blank one.
 2. Select a panel (click it in the preview) and edit its text, poses and props.
-3. Set paper, orientation, columns and rows per page in the Sheet panel.
+3. Set paper, orientation, columns and rows per page, and the figure style, in the Sheet panel.
 4. Print, and choose Save as PDF as the destination.
+
+## Figures
+
+The Figure setting in the Sheet panel switches the whole plan between two styles. **Stick figure** is the default. **Outline** draws a faceless mannequin in shorts around the same skeleton, so every preset and every pose you have made works in both without any change. The choice is saved with the plan.
+
+![Page 1 of the same plan with the Outline figure](docs/screenshot-outline.png)
+
+The library thumbnails and the pose editor always show sticks, so the drag dots sit on the bones. The outline is for the sheet and the print.
 
 ## Posing
 
@@ -61,7 +69,7 @@ Panels are placed left to right. If the next panel will not fit in the row, the 
 
 ## Known gaps
 
-- Figures are flat 2D. There is no depth, so a front view and a side view are both just angles on the same skeleton.
+- Figures are flat 2D. There is no depth, so a front view and a side view are both just angles on the same skeleton. The outline figure is a side view only, and its face is blank.
 - The torso is one rigid bone, so poses that bend or twist the spine (cat-cow, spinal twists) cannot be drawn, and a kettlebell always sits in line with the forearm, so it cannot hang straight down from raised hands. High pull and upright row finish with the hands at the chest rather than touching the chin for that reason.
 - Posing is by dragging only. The dots have no keyboard control yet.
 - There is no undo. Reset pose and Copy previous pose are the way back.
