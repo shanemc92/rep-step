@@ -1196,6 +1196,7 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
 .sh-pg { margin-left: auto; font-family: var(--font); font-size: calc(3.6mm * var(--k)); }
 .sh-grid { flex: 1; min-height: 0; display: grid; gap: calc(3mm * var(--k)); }
 .cell {
+    --kc: calc(var(--k) * var(--f, 1));
     position: relative;
     display: flex;
     flex-direction: column;
@@ -1203,19 +1204,19 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
     min-height: 0;
     overflow: hidden;
     background: var(--paper);
-    border: calc(0.9mm * var(--k)) solid var(--ink);
+    border: calc(0.9mm * var(--kc)) solid var(--ink);
     cursor: pointer;
 }
-.cell.sel { outline: calc(1.2mm * var(--k)) solid #1e88e5; outline-offset: calc(0.6mm * var(--k)); }
-.cell:focus-visible { outline: calc(1.2mm * var(--k)) solid #1e88e5; outline-offset: calc(0.6mm * var(--k)); }
-.cap { display: flex; align-items: stretch; font-size: calc(4.2mm * var(--k)); font-weight: 800; line-height: 1.1; text-transform: uppercase; }
+.cell.sel { outline: calc(1.2mm * var(--kc)) solid #1e88e5; outline-offset: calc(0.6mm * var(--kc)); }
+.cell:focus-visible { outline: calc(1.2mm * var(--kc)) solid #1e88e5; outline-offset: calc(0.6mm * var(--kc)); }
+.cap { display: flex; align-items: stretch; font-size: calc(4.2mm * var(--kc)); font-weight: 800; line-height: 1.1; text-transform: uppercase; }
 .cap .num { min-width: 1.8em; padding: 0.35em 0.6em; text-align: center; background: var(--spot); color: var(--spot-ink); }
-.cap .nm { flex: 1; min-width: 0; padding: 0.35em 0.7em; background: var(--tint); border-bottom: calc(0.5mm * var(--k)) solid var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cap .nm { flex: 1; min-width: 0; padding: 0.35em 0.7em; background: var(--tint); border-bottom: calc(0.5mm * var(--kc)) solid var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cell svg.strip { flex: 1 1 0; min-height: 0; width: 100%; display: block; }
-.chips { display: flex; flex-wrap: wrap; align-items: center; gap: calc(1.6mm * var(--k)); padding: calc(1.4mm * var(--k)) calc(2mm * var(--k)); }
-.chip { padding: 0.1em 0.5em; font-size: calc(4.4mm * var(--k)); font-weight: 800; white-space: nowrap; background: var(--paper); border: calc(0.5mm * var(--k)) solid var(--ink); border-radius: calc(1mm * var(--k)); }
-.chip.main { font-size: calc(5.4mm * var(--k)); background: var(--spot); color: var(--spot-ink); border-color: var(--spot); }
-.cnote { padding: calc(1.2mm * var(--k)) calc(2mm * var(--k)); font-size: calc(3.6mm * var(--k)); font-style: italic; line-height: 1.25; background: var(--note); border-top: calc(0.5mm * var(--k)) solid var(--ink); }
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: calc(1.6mm * var(--kc)); padding: calc(1.4mm * var(--kc)) calc(2mm * var(--kc)); }
+.chip { padding: 0.1em 0.5em; font-size: calc(4.4mm * var(--kc)); font-weight: 800; white-space: nowrap; background: var(--paper); border: calc(0.5mm * var(--kc)) solid var(--ink); border-radius: calc(1mm * var(--kc)); }
+.chip.main { font-size: calc(5.4mm * var(--kc)); background: var(--spot); color: var(--spot-ink); border-color: var(--spot); }
+.cnote { padding: calc(1.2mm * var(--kc)) calc(2mm * var(--kc)); font-size: calc(3.6mm * var(--kc)); font-style: italic; line-height: 1.25; background: var(--note); border-top: calc(0.5mm * var(--kc)) solid var(--ink); }
 
 @media print {
     html, body { background: #ffffff !important; }
@@ -1380,7 +1381,7 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
                 <label class="f">Paper<select class="field" id="lPaper"></select></label>
                 <label class="f">Orientation<select class="field" id="lOrient"><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></label>
                 <label class="f">Columns<input type="number" class="field" id="lCols" min="1" max="6" step="1"></label>
-                <label class="f">Rows per page<input type="number" class="field" id="lRows" min="1" max="4" step="1"></label>
+                <label class="f">Rows per page<input type="number" class="field" id="lRows" min="1" max="5" step="1"></label>
                 <label class="f">Accent ink<select class="field" id="lSpot"></select></label>
                 <label class="f">Figure<select class="field" id="lFig"></select></label>
             </div>
@@ -1425,6 +1426,7 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
                         <label class="f">Time<input type="text" class="field" id="fTime" maxlength="24" placeholder="45 s"></label>
                         <label class="f">Weight<input type="text" class="field" id="fWeight" maxlength="24" placeholder="16 kg"></label>
                         <label class="f">Rest<input type="text" class="field" id="fRest" maxlength="24" placeholder="60 s"></label>
+                        <label class="f">Width on the sheet<select class="field" id="fSpan" title="Automatic gives one column per pose. A fixed width is limited to the sheet's columns."></select></label>
                         <label class="f wide">Note<input type="text" class="field" id="fNote" maxlength="140" placeholder="Keep the back flat"></label>
                     </div>
 
@@ -1541,7 +1543,7 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
 "use strict";
 
 /* ---------- app identity ---------- */
-const APP = { id: "rep-step", version: "0.3.0", schema: 1 };
+const APP = { id: "rep-step", version: "0.4.0", schema: 1 };
 
 /* ---------- dom helpers ---------- */
 const $  = s => document.querySelector(s);
@@ -2902,6 +2904,7 @@ function cleanPanel(o) {
         name: txt(o.name, 60), sets: txt(o.sets, 8), reps: txt(o.reps, 24), time: txt(o.time, 24),
         weight: txt(o.weight, 24), rest: txt(o.rest, 24), note: txt(o.note, 140),
         ground: o.ground !== false,
+        span: Math.round(num(o.span, 0, 6, 0)),
         poses: poses.length ? poses : [buildPose({})]
     };
 }
@@ -2916,7 +2919,7 @@ function cleanState(d) {
     if (has(PAPER, lo.paper)) s.layout.paper = lo.paper;
     if (lo.orient === "portrait") s.layout.orient = "portrait";
     s.layout.cols = Math.round(num(lo.cols, 1, 6, s.layout.cols));
-    s.layout.rows = Math.round(num(lo.rows, 1, 4, s.layout.rows));
+    s.layout.rows = Math.round(num(lo.rows, 1, 5, s.layout.rows));
     if (has(SPOTS, lo.spot)) s.layout.spot = lo.spot;
     if (FIGURES.some(r => r[0] === lo.figure)) s.layout.figure = lo.figure;
     s.panels = (Array.isArray(d.panels) ? d.panels : []).slice(0, 60).map(cleanPanel);
@@ -3009,7 +3012,7 @@ function panelFromPreset(it) {
     const d = it.def || {};
     return {
         name: it.name, sets: d.sets || "", reps: d.reps || "", time: d.time || "",
-        weight: d.weight || "", rest: d.rest || "", note: d.note || "", ground: true,
+        weight: d.weight || "", rest: d.rest || "", note: d.note || "", ground: true, span: 0,
         poses: clone(it.poses)
     };
 }
@@ -3059,7 +3062,7 @@ function planRows(panels, cols) {
     const rows = [];
     let cur = [], used = 0;
     panels.forEach((p, i) => {
-        const span = Math.min(cols, p.poses.length);
+        const span = Math.min(cols, p.span || p.poses.length);
         if (used + span > cols) {
             cur[cur.length - 1].span += cols - used;
             rows.push(cur); cur = []; used = 0;
@@ -3105,6 +3108,8 @@ function renderSheets() {
     let st = $("#pageStyle");
     st.textContent = "@page { size: " + W + "mm " + H + "mm; margin: 0; }";
 
+    /* A row is comfortable at about 52 mm (A4 scale) or more. Shorter rows scale the cell type and borders down to match. */
+    const fit = Math.round(Math.min(1, (H / k - 36) / lo.rows / 52) * 100) / 100;
     const rows = planRows(state.panels, lo.cols);
     const pages = [];
     for (let i = 0; i < rows.length; i += lo.rows) pages.push(rows.slice(i, i + lo.rows));
@@ -3118,6 +3123,7 @@ function renderSheets() {
         sh.style.width = W + "mm";
         sh.style.height = (H - 0.4) + "mm";
         sh.style.setProperty("--k", String(k));
+        sh.style.setProperty("--f", String(fit));
         sh.style.setProperty("--spot", SPOTS[lo.spot][1]);
 
         const head = el("div", "sh-head");
@@ -3298,6 +3304,7 @@ function renderEditor() {
     ui.qi = Math.min(ui.qi, p.poses.length - 1);
     [["fName", "name"], ["fSets", "sets"], ["fReps", "reps"], ["fTime", "time"], ["fWeight", "weight"], ["fRest", "rest"], ["fNote", "note"]]
         .forEach(([id, k]) => { $("#" + id).value = p[k]; });
+    $("#fSpan").value = String(p.span || 0);
     const tg = $("#tgGround");
     tg.classList.toggle("active", p.ground);
     tg.setAttribute("aria-checked", String(p.ground));
@@ -3340,6 +3347,15 @@ function renderEditor() {
         changed();
     }));
 toggle($("#tgGround"), on => { const p = curPanel(); if (p) { p.ground = on; drawEditor(); changed(); } });
+(() => {
+    const sel = $("#fSpan");
+    for (let n = 0; n <= 6; n++) {
+        const o = el("option", null, n ? n + (n === 1 ? " column" : " columns") : "Automatic");
+        o.value = String(n);
+        sel.append(o);
+    }
+    sel.addEventListener("change", () => { const p = curPanel(); if (p) { p.span = Number(sel.value) || 0; changed(); } });
+})();
 
 const edAct = (id, fn) => $("#" + id).addEventListener("click", () => { if (curPanel()) fn(); });
 edAct("pPrev", () => { ui.pi = (ui.pi + state.panels.length - 1) % state.panels.length; ui.qi = 0; renderEditor(); renderSheets(); });
@@ -3404,7 +3420,7 @@ edAct("poseReset", () => {
 })();
 
 $("#btnBlank").addEventListener("click", () => {
-    addPanel({ name: "New exercise", sets: "", reps: "", time: "", weight: "", rest: "", note: "", ground: true, poses: [buildPose({})] });
+    addPanel({ name: "New exercise", sets: "", reps: "", time: "", weight: "", rest: "", note: "", ground: true, span: 0, poses: [buildPose({})] });
 });
 
 /* ---------- sheet settings ---------- */
@@ -3423,7 +3439,7 @@ $("#btnBlank").addEventListener("click", () => {
     });
     spot.addEventListener("change", () => { state.layout.spot = spot.value; changed(); });
     fig.addEventListener("change", () => { state.layout.figure = fig.value; changed(); });
-    [["lCols", "cols", 1, 6], ["lRows", "rows", 1, 4]].forEach(([id, k, lo, hi]) =>
+    [["lCols", "cols", 1, 6], ["lRows", "rows", 1, 5]].forEach(([id, k, lo, hi]) =>
         $("#" + id).addEventListener("input", e => {
             if (e.target.value === "") return;
             state.layout[k] = Math.round(num(e.target.value, lo, hi, state.layout[k]));
