@@ -3074,10 +3074,9 @@ function planRows(panels, cols) {
     return rows;
 }
 
-function buildCell(p, i, span, f) {
+function buildCell(p, i, span) {
     const c = el("div", "cell" + (i === ui.pi ? " sel" : ""));
     c.style.gridColumn = "span " + span;
-    c.style.setProperty("--f", String(f));   /* this cell's type scale, see renderSheets */
     c.tabIndex = 0;
     c.setAttribute("role", "button");
     c.setAttribute("aria-label", "Panel " + (i + 1) + ", " + (p.name || "untitled") + ". Select to edit.");
@@ -3109,12 +3108,9 @@ function renderSheets() {
     let st = $("#pageStyle");
     st.textContent = "@page { size: " + W + "mm " + H + "mm; margin: 0; }";
 
-    /* A row is comfortable at about 52 mm (A4 scale) or more. Shorter rows scale the cell type and borders down to match. */
-    const fit = Math.round(Math.min(1, (H / k - 36) / lo.rows / 52) * 100) / 100;
-    /* A narrow panel scales its type down with it, so the figure and the numbers stay in proportion. 95 mm is the width of a
-       panel on the default portrait page, where the type is at full size. Both limits apply, never below half size. */
-    const colW = (W / k - 16 - 3 * (lo.cols - 1)) / lo.cols;
-    const cellFit = span => Math.round(Math.max(0.5, Math.min(1, fit, (colW * span + 3 * (span - 1)) / 95)) * 100) / 100;
+    /* Only the five-row mode shrinks the type. A row is comfortable at about 52 mm (A4 scale) or more, so a short five-row
+       page (landscape) scales the cell type and borders down, by the same amount on every panel. Fewer rows are full size. */
+    const fit = lo.rows >= 5 ? Math.round(Math.min(1, (H / k - 36) / lo.rows / 52) * 100) / 100 : 1;
     const rows = planRows(state.panels, lo.cols);
     const pages = [];
     for (let i = 0; i < rows.length; i += lo.rows) pages.push(rows.slice(i, i + lo.rows));
@@ -3140,7 +3136,7 @@ function renderSheets() {
         const grid = el("div", "sh-grid");
         grid.style.gridTemplateColumns = "repeat(" + lo.cols + ", minmax(0, 1fr))";
         grid.style.gridTemplateRows = "repeat(" + lo.rows + ", minmax(0, 1fr))";
-        pg.forEach(row => row.forEach(({ i, span }) => grid.append(buildCell(state.panels[i], i, span, cellFit(span)))));
+        pg.forEach(row => row.forEach(({ i, span }) => grid.append(buildCell(state.panels[i], i, span))));
         sh.append(grid);
         host.append(sh);
     });
