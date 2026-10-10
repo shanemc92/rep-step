@@ -37,6 +37,8 @@ Poses are stored as joint angles on a skeleton with fixed bone lengths, so every
 | Hollow dots | Far limbs, drawn lighter on the sheet |
 | Square dot | Moves the whole figure |
 | Shift while dragging | Snaps to 15 degrees |
+| Next point, Prev point (or `]` and `[`) | Steps through the dots one at a time, for when they overlap. The picked dot turns red and is named beside the button, props included |
+| Arrow keys | Move the picked dot by 1 unit. Shift moves 4, Alt moves a quarter. A bone only turns, so a dot on it moves around its parent. Escape lets go. Ignored while you type in a field |
 | Mirror | Flips the pose to face the other way |
 | Centre and ground | Rests the lowest point on the ground line and centres the figure |
 | Copy previous pose | Starts this pose from the one before it |

@@ -1113,6 +1113,9 @@ label.f.grow { flex: 1 1 200px; }
     -webkit-user-select: none;
 }
 .edtools { display: flex; flex-direction: column; gap: 12px; }
+.ptbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ptname { flex: 1 1 100%; font-size: 12.5px; color: var(--fg-dim); }
+.ptname.on { color: var(--bad); font-weight: 700; }
 .proprow {
     display: flex;
     align-items: center;
@@ -1148,6 +1151,8 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
 .edsvg .h-vis.far { fill: var(--card); stroke: var(--accent); stroke-width: 2; }
 .edsvg .h-vis.root { fill: var(--accent); stroke: var(--card); }
 .edsvg .h-vis.prop { fill: var(--warn); stroke: var(--card); }
+.edsvg .h-vis.sel { fill: var(--bad); stroke: var(--card); stroke-width: 2; }
+.edsvg .h-ring { fill: none; stroke: var(--bad); stroke-width: 1.4; pointer-events: none; }
 
 /* The sheet is paper. It is the product, so it keeps one fixed ink-on-white
    palette in every design and mode, and the same in print. */
@@ -1427,6 +1432,11 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
                     <div class="edwrap">
                         <svg id="edSvg" class="edsvg" viewBox="0 0 160 160" role="img" aria-label="Pose editor. Drag the dots to pose the figure."><g id="edG"></g></svg>
                         <div class="edtools">
+                            <div class="ptbar">
+                                <button class="btn btn-sm" id="ptPrev" type="button" title="Previous point ( [ )">Prev point</button>
+                                <button class="btn btn-sm" id="ptNext" type="button" title="Next point ( ] )">Next point</button>
+                                <span class="ptname" id="ptName" aria-live="polite">No point selected</span>
+                            </div>
                             <div class="row">
                                 <button class="btn btn-sm" id="poseMirror">Mirror</button>
                                 <button class="btn btn-sm" id="poseGround">Centre and ground</button>
@@ -1446,7 +1456,7 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
                                 <button class="btn btn-sm" id="propAdd">Add prop</button>
                             </div>
                             <div id="propList"></div>
-                            <div class="note">Drag the dots to pose the figure. Filled dots are the near limbs, hollow dots the far ones. The square dot moves the whole figure. Hold Shift to snap to 15 degrees.</div>
+                            <div class="note">Drag the dots to pose the figure. Filled dots are the near limbs, hollow dots the far ones. The square dot moves the whole figure. Hold Shift to snap to 15 degrees. When dots overlap, press ] and [ (or Next point) to step through them: the picked dot turns red and is named above. The arrow keys then nudge it, Shift for bigger steps and Alt for finer ones, and Escape lets go.</div>
                         </div>
                     </div>
                 </div>
@@ -1480,7 +1490,9 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
             <div class="prose">
                 Bones have fixed lengths, so a figure always looks like the same person. Dragging a joint
                 turns the bone above it around its parent, and everything below keeps its own angle, so
-                pulling an elbow moves the hand with it. Figures are flat, side or front view as you
+                pulling an elbow moves the hand with it. When dots sit on top of each other, Next point
+                (or the ] and [ keys) steps through them one at a time, the picked dot turns red with its
+                name beside the button, and the arrow keys move it. Figures are flat, side or front view as you
                 choose to draw them. Near limbs are drawn solid and far limbs lighter.
             </div>
         </div>
@@ -2865,7 +2877,7 @@ function blankState() {
     };
 }
 let state = blankState();
-const ui = { pi: 0, qi: 0 };
+const ui = { pi: 0, qi: 0, sel: null };   /* sel: the point picked in the pose editor */
 
 /* Everything read from storage or a file goes through here, so a hand-edited or
    hostile JSON file can only ever produce a valid state. */
@@ -3140,14 +3152,29 @@ const curPanel = () => state.panels[ui.pi] || null;
 const curPose = () => { const p = curPanel(); return p ? p.poses[Math.min(ui.qi, p.poses.length - 1)] : null; };
 
 function handle(g, name, pt, kind) {
+    const on = ui.sel === name;
+    if (on) svgEl("circle", { cx: r1(pt[0]), cy: r1(pt[1]), r: 8.5, class: "h-ring" }, g);
     svgEl("circle", { cx: r1(pt[0]), cy: r1(pt[1]), r: 10, class: "h-hit", "data-h": name }, g);
-    svgEl("circle", { cx: r1(pt[0]), cy: r1(pt[1]), r: kind === "root" ? 5.5 : 4, class: "h-vis " + kind }, g);
+    svgEl("circle", { cx: r1(pt[0]), cy: r1(pt[1]), r: kind === "root" ? 5.5 : 4, class: "h-vis " + kind + (on ? " sel" : "") }, g);
+}
+/* The points that can be picked, in the order the cycle button visits them. */
+const POINTS = [["hip", "Hip (moves the whole figure)"], ["neck", "Neck (turns the body)"], ["head", "Head"],
+    ["rE", "Near elbow"], ["rH", "Near hand"], ["rK", "Near knee"], ["rA", "Near ankle"],
+    ["lE", "Far elbow"], ["lH", "Far hand"], ["lK", "Far knee"], ["lA", "Far ankle"]];
+function pointList() {
+    const p = curPose(), out = POINTS.slice();
+    if (p) p.props.forEach((o, i) => { if (o.x != null && o.k !== "mat") out.push(["p" + i, PROP_NAME[o.k] || o.k]); });
+    return out;
+}
+function pointAt(p, name) {
+    if (name[0] === "p") { const o = p.props[Number(name.slice(1))]; return o && o.x != null ? [o.x, o.y] : null; }
+    return skeleton(p)[name] || null;
 }
 function drawEditor() {
     const g = $("#edG");
     g.textContent = "";
     const p = curPose(), panel = curPanel();
-    if (!p) return;
+    if (!p) { ui.sel = null; showPoint(); return; }
     for (let i = 20; i < CELL; i += 20) {
         svgEl("line", { class: "grid", x1: i, y1: 0, x2: i, y2: CELL }, g);
         svgEl("line", { class: "grid", x1: 0, y1: i, x2: CELL, y2: i }, g);
@@ -3155,13 +3182,20 @@ function drawEditor() {
     if (panel.ground) svgEl("line", { class: "gl", x1: 0, y1: GROUND, x2: CELL, y2: GROUND }, g);
     drawPose(g, p);
     const s = skeleton(p);
-    p.props.forEach((o, i) => { if (o.x != null && o.k !== "mat") handle(g, "p" + i, [o.x, o.y], "prop"); });
-    handle(g, "lE", s.lE, "far"); handle(g, "lH", s.lH, "far");
-    handle(g, "lK", s.lK, "far"); handle(g, "lA", s.lA, "far");
-    handle(g, "head", s.head, "near"); handle(g, "neck", s.neck, "near");
-    handle(g, "rE", s.rE, "near"); handle(g, "rH", s.rH, "near");
-    handle(g, "rK", s.rK, "near"); handle(g, "rA", s.rA, "near");
-    handle(g, "hip", s.hip, "root");
+    const hs = [];
+    p.props.forEach((o, i) => { if (o.x != null && o.k !== "mat") hs.push(["p" + i, [o.x, o.y], "prop"]); });
+    hs.push(["lE", s.lE, "far"], ["lH", s.lH, "far"], ["lK", s.lK, "far"], ["lA", s.lA, "far"],
+        ["head", s.head, "near"], ["neck", s.neck, "near"], ["rE", s.rE, "near"], ["rH", s.rH, "near"],
+        ["rK", s.rK, "near"], ["rA", s.rA, "near"], ["hip", s.hip, "root"]);
+    if (ui.sel && !hs.some(h => h[0] === ui.sel)) ui.sel = null;
+    hs.sort((a, b) => (a[0] === ui.sel) - (b[0] === ui.sel));
+    hs.forEach(h => handle(g, h[0], h[1], h[2]));
+    showPoint();
+}
+function showPoint() {
+    const row = pointList().filter(r => r[0] === ui.sel)[0], n = $("#ptName");
+    n.textContent = row ? "Selected: " + row[1] : "No point selected";
+    n.classList.toggle("on", !!row);
 }
 
 function dragTo(h, q, snap) {
@@ -3212,6 +3246,7 @@ function dragTo(h, q, snap) {
         e.preventDefault();
         try { svg.setPointerCapture(e.pointerId); } catch (err) {}
         drag = h;
+        if (ui.sel !== h) { ui.sel = h; drawEditor(); }
     });
     svg.addEventListener("pointermove", e => {
         if (!drag) return;
@@ -3226,6 +3261,34 @@ function dragTo(h, q, snap) {
 })();
 
 function changed() { persist(); renderSheets(); }
+
+/* Stepping through the points with a button or ] and [, and moving the picked one with the arrow keys. */
+(() => {
+    const cycle = dir => {
+        if (!curPose()) return;
+        const list = pointList(), at = list.findIndex(r => r[0] === ui.sel);
+        ui.sel = list[at < 0 ? (dir > 0 ? 0 : list.length - 1) : (at + dir + list.length) % list.length][0];
+        drawEditor();
+    };
+    $("#ptNext").addEventListener("click", () => cycle(1));
+    $("#ptPrev").addEventListener("click", () => cycle(-1));
+    const ARROWS = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
+    document.addEventListener("keydown", e => {
+        if (e.ctrlKey || e.metaKey || $("#pane-work").hidden || !curPose()) return;
+        const t = e.target;
+        if (t && t.matches && t.matches("input, select, textarea, [contenteditable]")) return;
+        if (e.key === "]" || e.key === "[") { e.preventDefault(); cycle(e.key === "]" ? 1 : -1); return; }
+        if (!ui.sel) return;
+        if (e.key === "Escape") { ui.sel = null; drawEditor(); return; }
+        const a = ARROWS[e.key];
+        if (!a) return;
+        e.preventDefault();
+        const p = curPose(), at = pointAt(p, ui.sel), k = e.altKey ? 0.25 : e.shiftKey ? 4 : 1;
+        if (!at) return;
+        dragTo(ui.sel, [at[0] + a[0] * k, at[1] + a[1] * k], false);
+        persist(); drawEditor(); renderSheets();
+    });
+})();
 function renderEditor() {
     const p = curPanel();
     $("#edEmpty").hidden = !!p;
