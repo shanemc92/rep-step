@@ -14,7 +14,7 @@ The sheet that prints, page 1 of a two page plan (A4 landscape, four columns, tw
 
 1. Pick an exercise from the library to add a panel, or add a blank one.
 2. Select a panel (click it in the preview) and edit its text, poses and props.
-3. Set paper, orientation, columns and rows per page (up to 5), and the figure style, in the Sheet panel. Change a panel's width in the panel editor to make a row fit.
+3. Set paper, orientation, columns and rows per page (up to 6), and the figure style, in the Sheet panel. Change a panel's width in the panel editor to make a row fit.
 4. Print, and choose Save as PDF as the destination.
 
 ## Figures
@@ -65,7 +65,7 @@ Save JSON writes the whole plan. Load JSON reads it back, including files saved 
 
 ## Layout
 
-Panels are placed left to right. A panel takes one column per pose unless you set its Width on the sheet in the panel editor: Automatic is one column per pose, and 1 to 6 columns fixes the width (never more than the sheet has). A narrow panel is how you fit four short exercises across a landscape page, and a wide one is how you fill a row. If the next panel will not fit in the row, the previous one stretches to close it. A partly filled last row is left open. `rows` is how many rows fit on a page, up to 5, and extra rows go onto further pages. Type scales with paper size, so A3 is A4 enlarged. In the five-row mode it also scales down when the page is short (landscape), by the same amount on every panel so they stay uniform. Four rows or fewer are always full size.
+Panels are placed left to right. A panel takes one column per pose unless you set its Width on the sheet in the panel editor: Automatic is one column per pose, and 1 to 6 columns fixes the width (never more than the sheet has). A narrow panel is how you fit four short exercises across a landscape page, and a wide one is how you fill a row. If the next panel will not fit in the row, the previous one stretches to close it. A partly filled last row is left open. `rows` is how many rows fit on a page, up to 6, and extra rows go onto further pages. Type scales with paper size, so A3 is A4 enlarged. In the five and six row modes it also scales down when the rows get short (landscape, or six rows), by the same amount on every panel so they stay uniform. Four rows or fewer are always full size. The reps, weight and rest chips are as tall as one line of note in every layout.
 
 ## Library
 

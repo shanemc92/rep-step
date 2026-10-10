@@ -1213,10 +1213,12 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
 .cap .num { min-width: 1.8em; padding: 0.35em 0.6em; text-align: center; background: var(--spot); color: var(--spot-ink); }
 .cap .nm { flex: 1; min-width: 0; padding: 0.35em 0.7em; background: var(--tint); border-bottom: calc(0.5mm * var(--kc)) solid var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cell svg.strip { flex: 1 1 0; min-height: 0; width: 100%; display: block; }
-.chips { display: flex; flex-wrap: wrap; align-items: center; gap: calc(1.6mm * var(--kc)); padding: calc(1.4mm * var(--kc)) calc(2mm * var(--kc)); }
-.chip { padding: 0.1em 0.5em; font-size: calc(4.4mm * var(--kc)); font-weight: 800; white-space: nowrap; background: var(--paper); border: calc(0.5mm * var(--kc)) solid var(--ink); border-radius: calc(1mm * var(--kc)); }
-.chip.main { font-size: calc(5.4mm * var(--kc)); background: var(--spot); color: var(--spot-ink); border-color: var(--spot); }
-.cnote { padding: calc(1.2mm * var(--kc)) calc(2mm * var(--kc)); font-size: calc(3.6mm * var(--kc)); font-style: italic; line-height: 1.25; background: var(--note); border-top: calc(0.5mm * var(--kc)) solid var(--ink); }
+/* The chip row is exactly as tall as one line of note (7.4mm: 4.5mm of text, 2.4mm of padding, 0.5mm of rule), and the reps chip is the
+   same size as the others, so the figure gets the room. It only grows if the chips have to wrap onto a second line. */
+.chips { display: flex; flex-wrap: wrap; align-items: center; gap: calc(1.4mm * var(--kc)); box-sizing: border-box; min-height: calc(7.4mm * var(--kc)); padding: calc(0.8mm * var(--kc)) calc(2mm * var(--kc)); }
+.chip { padding: 0 0.5em; font-size: calc(3.6mm * var(--kc)); line-height: 1.2; font-weight: 800; white-space: nowrap; background: var(--paper); border: calc(0.4mm * var(--kc)) solid var(--ink); border-radius: calc(0.9mm * var(--kc)); }
+.chip.main { background: var(--spot); color: var(--spot-ink); border-color: var(--spot); }
+.cnote { box-sizing: border-box; min-height: calc(7.4mm * var(--kc)); padding: calc(1.2mm * var(--kc)) calc(2mm * var(--kc)); font-size: calc(3.6mm * var(--kc)); font-style: italic; line-height: 1.25; background: var(--note); border-top: calc(0.5mm * var(--kc)) solid var(--ink); }
 
 @media print {
     html, body { background: #ffffff !important; }
@@ -1381,7 +1383,7 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
                 <label class="f">Paper<select class="field" id="lPaper"></select></label>
                 <label class="f">Orientation<select class="field" id="lOrient"><option value="landscape">Landscape</option><option value="portrait">Portrait</option></select></label>
                 <label class="f">Columns<input type="number" class="field" id="lCols" min="1" max="6" step="1"></label>
-                <label class="f">Rows per page<input type="number" class="field" id="lRows" min="1" max="5" step="1"></label>
+                <label class="f">Rows per page<input type="number" class="field" id="lRows" min="1" max="6" step="1"></label>
                 <label class="f">Accent ink<select class="field" id="lSpot"></select></label>
                 <label class="f">Figure<select class="field" id="lFig"></select></label>
             </div>
@@ -2919,7 +2921,7 @@ function cleanState(d) {
     if (has(PAPER, lo.paper)) s.layout.paper = lo.paper;
     if (lo.orient === "portrait") s.layout.orient = "portrait";
     s.layout.cols = Math.round(num(lo.cols, 1, 6, s.layout.cols));
-    s.layout.rows = Math.round(num(lo.rows, 1, 5, s.layout.rows));
+    s.layout.rows = Math.round(num(lo.rows, 1, 6, s.layout.rows));
     if (has(SPOTS, lo.spot)) s.layout.spot = lo.spot;
     if (FIGURES.some(r => r[0] === lo.figure)) s.layout.figure = lo.figure;
     s.panels = (Array.isArray(d.panels) ? d.panels : []).slice(0, 60).map(cleanPanel);
@@ -3108,8 +3110,8 @@ function renderSheets() {
     let st = $("#pageStyle");
     st.textContent = "@page { size: " + W + "mm " + H + "mm; margin: 0; }";
 
-    /* Only the five-row mode shrinks the type. A row is comfortable at about 52 mm (A4 scale) or more, so a short five-row
-       page (landscape) scales the cell type and borders down, by the same amount on every panel. Fewer rows are full size. */
+    /* Only the five and six row modes shrink the type. A row is comfortable at about 52 mm (A4 scale) or more, so a short
+       page (landscape, or six rows) scales the cell type and borders down, by the same amount on every panel. Fewer rows are full size. */
     const fit = lo.rows >= 5 ? Math.round(Math.min(1, (H / k - 36) / lo.rows / 52) * 100) / 100 : 1;
     const rows = planRows(state.panels, lo.cols);
     const pages = [];
@@ -3440,7 +3442,7 @@ $("#btnBlank").addEventListener("click", () => {
     });
     spot.addEventListener("change", () => { state.layout.spot = spot.value; changed(); });
     fig.addEventListener("change", () => { state.layout.figure = fig.value; changed(); });
-    [["lCols", "cols", 1, 6], ["lRows", "rows", 1, 5]].forEach(([id, k, lo, hi]) =>
+    [["lCols", "cols", 1, 6], ["lRows", "rows", 1, 6]].forEach(([id, k, lo, hi]) =>
         $("#" + id).addEventListener("input", e => {
             if (e.target.value === "") return;
             state.layout[k] = Math.round(num(e.target.value, lo, hi, state.layout[k]));
