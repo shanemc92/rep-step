@@ -1123,7 +1123,10 @@ label.f.grow { flex: 1 1 200px; }
     font-size: 12.5px;
 }
 
-/* Drawing: the figure takes its colours from whichever scope it sits in */
+</style>
+<style id="sheetCss">
+/* Drawing: the figure takes its colours from whichever scope it sits in. This block, together with the page rule,
+   is also written into the HTML export, so the exported sheet is styled by exactly the same rules as the preview. */
 .edsvg, .thumb { --ink: var(--fg); --paper: var(--card); --tint: var(--raised); --spot: var(--accent); }
 .thumb { --ink: var(--fg-dim); --paper: var(--sunken); }
 svg .ln { fill: none; stroke: var(--ink); stroke-width: 3.8; stroke-linecap: round; stroke-linejoin: round; }
@@ -1352,6 +1355,7 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
             <div class="row">
                 <button class="btn" id="btnLoad">Load JSON</button>
                 <button class="btn" id="btnSave">Save JSON</button>
+                <button class="btn" id="btnHtml">Export HTML</button>
                 <button class="btn btn-primary" id="btnPrint">Print / save as PDF</button>
                 <div class="spacer"></div>
                 <button class="btn btn-ghost btn-danger" id="btnReset">Reset</button>
@@ -1492,9 +1496,10 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
         <div class="panel">
             <div class="panel-head"><h2>Saving</h2></div>
             <div class="prose">
-                Save JSON writes the whole plan to a file you can load again. The plan is also kept in this
-                browser automatically. Loaded files are checked and cleaned before use, so a damaged file
-                cannot put the tool into a bad state.
+                Save JSON writes the whole plan to a file you can load again. Export HTML writes the sheets
+                as a single page with no script in it, which you can open in any browser, share or print to
+                PDF. The plan is also kept in this browser automatically. Loaded files are checked and
+                cleaned before use, so a damaged file cannot put the tool into a bad state.
             </div>
         </div>
         <div class="panel">
@@ -2178,6 +2183,11 @@ const LIB_SRC = [
         P({ ra: 176, rf: 176, la: -30, lf: -30 }, LG.stand)] },
     { id: "kb-press", name: "Strict press", cat: "Kettlebell", def: { sets: "4", reps: "6 each side", weight: "16 kg", rest: "75 s" },
       props: [KB_R], poses: [P(LG.stand, AR.rackR), P(LG.stand, AR.overR)] },
+    { id: "kb-two-hand-press", name: "Two-hand overhead press", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s", note: "Hold the bell by the horns, press tall" },
+      props: [KB_B], poses: [
+        P(LG.stand, AR.goblet),
+        P(LG.stand, { ra: 125, rf: 168, la: 123, lf: 166 }),
+        P(LG.straight, AR.up)] },
     { id: "kb-push-press", name: "Push press", cat: "Kettlebell", def: { sets: "4", reps: "6 each side", weight: "16 kg", rest: "75 s" },
       props: [KB_R], poses: [
         P(LG.stand, AR.rackR),
@@ -2211,6 +2221,16 @@ const LIB_SRC = [
         P(LG.stand, AR.goblet),
         P(LG.stand, { ra: 140, rf: 165, la: 138, lf: 163 }),
         P(LG.stand, { ra: 150, rf: -78, la: 148, lf: -80 })] },
+    { id: "kb-seated-side-halo", name: "Seated side-to-side + halo", cat: "Kettlebell", def: { sets: "3", reps: "8 each way", weight: "8 kg", rest: "45 s", note: "Touch down, halo through the middle, touch the other side" },
+      props: [KB_B], poses: [
+        { t: 180, h: 178, rt: 88, rs: 88, lt: 86, ls: 86, ra: 97, rf: 0, la: 95, lf: 0 },
+        { t: 180, h: 178, rt: 88, rs: 88, lt: 86, ls: 86, ra: 176, rf: 176, la: 174, lf: 174 },
+        { t: 180, h: 178, rt: 88, rs: 88, lt: 86, ls: 86, ra: -90, rf: 0, la: -92, lf: 0 }] },
+    { id: "kb-seated-halo", name: "Seated halo", cat: "Kettlebell", def: { sets: "3", reps: "8 each way", weight: "8 kg", rest: "45 s", note: "Sit tall, bell close to the head" },
+      props: [KB_B], poses: [
+        { t: 180, h: 178, rt: 88, rs: 88, lt: 86, ls: 86, ra: 30, rf: 150, la: 28, lf: 148 },
+        { t: 180, h: 178, rt: 88, rs: 88, lt: 86, ls: 86, ra: 140, rf: 165, la: 138, lf: 163 },
+        { t: 180, h: 178, rt: 88, rs: 88, lt: 86, ls: 86, ra: 150, rf: -78, la: 148, lf: -80 }] },
     { id: "kb-around-world", name: "Around the world", cat: "Kettlebell", def: { sets: "3", reps: "8 each way", weight: "8 kg", rest: "45 s", note: "Pass it around the waist, tight" },
       props: [KB_B], poses: [
         P(LG.stand, { ra: 28, rf: 14, la: 26, lf: 12 }),
@@ -2911,6 +2931,42 @@ function saveJson() {
     download(fname("json"), JSON.stringify(out, null, 2), "application/json");
     notify("Saved");
 }
+/* A standalone page of the sheets: no script, no network, the same markup and rules as the preview. It opens in any
+   browser and prints to PDF the same way. It is built as a document and serialised, so nothing is written through
+   innerHTML and every text value is escaped by the serialiser. */
+function exportHtml() {
+    const title = state.meta.title.trim() || "Workout";
+    const doc = document.implementation.createHTMLDocument(title);
+    const meta = attrs => { const m = doc.createElement("meta"); Object.keys(attrs).forEach(k => m.setAttribute(k, attrs[k])); return m; };
+    const root = getComputedStyle(document.documentElement);
+    const css = ":root { --ui: " + root.getPropertyValue("--ui") + "; --font: " + root.getPropertyValue("--font") + "; --gap: 14px; --shadow-lift: 0 6px 24px -8px rgba(0, 0, 0, 0.35); }\n"
+        + $("#sheetCss").textContent + "\n" + $("#pageStyle").textContent + "\n"
+        + "html { background: #e4e2da; }\n"
+        + "body { margin: 0; padding: 24px 12px; display: flex; flex-direction: column; align-items: center; gap: 20px; }\n"
+        + "@media print { html, body { background: #ffffff !important; } body { display: block; padding: 0; } .sheet { margin: 0; } }\n";
+    const style = doc.createElement("style");
+    style.textContent = css;
+    doc.head.prepend(
+        meta({ charset: "utf-8" }),
+        meta({ name: "viewport", content: "width=device-width, initial-scale=1" }),
+        meta({ "http-equiv": "Content-Security-Policy", content: "default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'" }),
+        meta({ name: "referrer", content: "no-referrer" }),
+        meta({ name: "robots", content: "noindex" }),
+        meta({ name: "generator", content: APP.id + " " + APP.version })
+    );
+    doc.head.append(style);
+    $$("#sheets .sheet").forEach(sheet => {
+        const c = sheet.cloneNode(true);
+        c.style.zoom = "";
+        c.querySelectorAll(".cell").forEach(cell => {
+            cell.classList.remove("sel");
+            ["tabindex", "role", "aria-label"].forEach(a => cell.removeAttribute(a));
+        });
+        doc.body.append(c);
+    });
+    download(fname("html"), "<!DOCTYPE html>\n" + doc.documentElement.outerHTML, "text/html");
+    notify("Exported");
+}
 function loadJson(text) {
     let d;
     try { d = JSON.parse(text); }
@@ -3333,6 +3389,7 @@ function render() {
 
 /* ---------- toolbar ---------- */
 $("#btnSave").addEventListener("click", saveJson);
+$("#btnHtml").addEventListener("click", exportHtml);
 $("#btnLoad").addEventListener("click", () => $("#fileIn").click());
 $("#fileIn").addEventListener("change", e => {
     if (e.target.files[0]) read(e.target.files[0], loadJson);

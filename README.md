@@ -57,6 +57,8 @@ Four designs (cobalt, chamfer, console, contour), four modes (dark, dusk, sepia,
 
 ## Saving
 
+Export HTML writes the sheets as one standalone page: no script, no network and no dependencies, with a strict meta CSP of its own. It uses the same markup and the same CSS rules as the preview (the CSS comes from the `sheetCss` block in this file), in whichever figure style is selected, so it looks the same and prints to PDF the same way. Titles and notes are escaped by the serialiser, not by hand.
+
 Save JSON writes the whole plan. Load JSON reads it back, including files saved under the old name `rep-strip`. The plan is also autosaved to this browser. Everything read from a file or from storage is rebuilt field by field through `cleanState()`, so unknown keys are dropped, numbers are clamped and only known props are accepted.
 
 ## Layout
@@ -65,7 +67,7 @@ Panels are placed left to right. If the next panel will not fit in the row, the 
 
 ## Library
 
-130 starter exercises in ten categories: Kettlebell (46, including double-bell work, carries, Turkish get-up, snatch, windmill, halo, around the world, side swing and wood chop), Dumbbell, Barbell, Legs, Push, Pull, Core (with single-leg raise, Pilates hundred and roll-up), Cardio (with running, jump rope, spinning and the rowing machine), Stretch (with yoga poses such as downward dog, chair and tree) and Mobility (with thread the needle and deep squat). Filter by category or search by name. They live in `LIB_SRC` as plain angle objects, and `buildLib()` grounds and centres each one. To add an exercise, copy an entry and change the angles. Poses are approximations, so expect to nudge some in the editor. The least convincing are the floor poses (child's pose, sit-up, hollow and V-sit holds, knees to chest, thread the needle), side plank and step-up.
+133 starter exercises in ten categories: Kettlebell (49, including double-bell work, carries, Turkish get-up, snatch, windmill, halo, seated halo, two-hand overhead press, around the world, side swing and wood chop), Dumbbell, Barbell, Legs, Push, Pull, Core (with single-leg raise, Pilates hundred and roll-up), Cardio (with running, jump rope, spinning and the rowing machine), Stretch (with yoga poses such as downward dog, chair and tree) and Mobility (with thread the needle and deep squat). Filter by category or search by name. They live in `LIB_SRC` as plain angle objects, and `buildLib()` grounds and centres each one. To add an exercise, copy an entry and change the angles. Poses are approximations, so expect to nudge some in the editor. The least convincing are the floor poses (child's pose, sit-up, hollow and V-sit holds, knees to chest, thread the needle), side plank and step-up.
 
 ## Known gaps
 
