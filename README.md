@@ -65,7 +65,7 @@ Save JSON writes the whole plan. Load JSON reads it back, including files saved 
 
 ## Layout
 
-Panels are placed left to right. A panel takes one column per pose unless you set its Width on the sheet in the panel editor: Automatic is one column per pose, and 1 to 6 columns fixes the width (never more than the sheet has). A narrow panel is how you fit four short exercises across a landscape page, and a wide one is how you fill a row. If the next panel will not fit in the row, the previous one stretches to close it. A partly filled last row is left open. `rows` is how many rows fit on a page, up to 5, and extra rows go onto further pages. Type scales with paper size, so A3 is A4 enlarged. It also scales down when rows get short, which only happens at four or five rows on a landscape page.
+Panels are placed left to right. A panel takes one column per pose unless you set its Width on the sheet in the panel editor: Automatic is one column per pose, and 1 to 6 columns fixes the width (never more than the sheet has). A narrow panel is how you fit four short exercises across a landscape page, and a wide one is how you fill a row. If the next panel will not fit in the row, the previous one stretches to close it. A partly filled last row is left open. `rows` is how many rows fit on a page, up to 5, and extra rows go onto further pages. Type scales with paper size, so A3 is A4 enlarged. It also scales down for each panel on its own: a panel narrower than about 95 mm (A4 scale) shrinks its caption, reps, weight and note in proportion, down to half size, and so does a panel in a row that is short, which happens at four or five rows on a landscape page. That is what lets a page of narrow panels stay readable.
 
 ## Library
 
