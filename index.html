@@ -1545,7 +1545,7 @@ svg .arr { fill: none; stroke: var(--spot); stroke-width: 3.6; stroke-linecap: r
 "use strict";
 
 /* ---------- app identity ---------- */
-const APP = { id: "rep-step", version: "0.4.0", schema: 1 };
+const APP = { id: "rep-step", version: "0.5.0", schema: 1 };
 
 /* ---------- dom helpers ---------- */
 const $  = s => document.querySelector(s);
@@ -2097,7 +2097,8 @@ const AR = {
     rackB:  { ra: 15,  rf: 160, la: 13,  lf: 158 },
     overR:  { ra: 176, rf: 176, la: -30, lf: -30 },
     fgob:   { ra: 30,  rf: 150, la: -30, lf: -150 },
-    swingBack: { ra: -20, rf: -20, la: -22, lf: -22 }
+    swingBack: { ra: -20, rf: -20, la: -22, lf: -22 },
+    bar:    { ra: 0,   rf: 178, la: 2,   lf: 176 }
 };
 const LG = {
     stand:    { rt: 3,  rs: 3,   lt: -3,  ls: -3 },
@@ -2109,7 +2110,7 @@ const LG = {
     hinge:    { rt: 28, rs: -8,  lt: 24,  ls: -10 },
     hingeLow: { rt: 60, rs: -18, lt: 56,  ls: -20 },
     lying:    { rt: 140, rs: 40, lt: 136, ls: 44 },
-    tabletop: { rt: 130, rs: 40, lt: 128, ls: 38 },
+    tabletop: { rt: 178, rs: 88, lt: 176, ls: 86 },
     stride1:  { rt: 25, rs: -5,  lt: -25, ls: -35 },
     stride2:  { rt: -25, rs: -35, lt: 25, ls: -5 },
     sumoStand:{ rt: 20, rs: 10,  lt: -20, ls: -10 },
@@ -2121,100 +2122,101 @@ const PLANK_UP = { t: 114, h: 105, rt: -66, rs: -66, lt: -65, ls: -65, ra: 0, rf
 const QUAD = { t: 111, h: 100, rt: 0, rs: -90, lt: 2, ls: -90, ra: 0, rf: 0, la: 2, lf: 2 };
 const KB_R = { k: "kb", at: "r" }, KB_L = { k: "kb", at: "l" }, KB_B = { k: "kb", at: "b" };
 const DB_B = { k: "db", at: "b" }, DB_R = { k: "db", at: "r" };
+const BB_B = { k: "bb", at: "b" }, PLATE_B = { k: "plate", at: "b" }, BALL_B = { k: "ball", at: "b" };
 const BENCH = { k: "bench", ox: -20, oy: 3 };
 const HINGE_K = P({ t: 120, h: 140 }, LG.hinge, AR.swingBack);
 const ROW_LEGS = { rt: 25, rs: -10, lt: 22, ls: -12 };
 
 const LIB_SRC = [
     /* ---------- Kettlebell ---------- */
-    { id: "kb-swing", name: "Kettlebell swing", cat: "Kettlebell", def: { sets: "4", reps: "15", weight: "16 kg", rest: "60 s" },
+    { id: "kb-swing", name: "Kettlebell swing", cat: "Kettlebell", def: { sets: "4", reps: "15", weight: "16 kg", rest: "60 s", note: "Snap the hips, let the bell float" },
       props: [KB_B], poses: [
         P({ t: 120, h: 140 }, LG.hinge, AR.swingBack),
         P({ t: 165, h: 175, ra: 55, rf: 55, la: 53, lf: 53 }, { rt: 6, rs: 3, lt: 2, ls: -1 }),
         P(LG.stand, AR.fwd)] },
-    { id: "american-swing", name: "American swing", cat: "Kettlebell", def: { sets: "4", reps: "12", weight: "16 kg", rest: "60 s" },
+    { id: "american-swing", name: "American swing", cat: "Kettlebell", def: { sets: "4", reps: "12", weight: "16 kg", rest: "60 s", note: "Snap the hips, bell to overhead" },
       props: [KB_B], poses: [
         HINGE_K,
         P({ t: 172, h: 176, ra: 120, rf: 130, la: 118, lf: 128 }, { rt: 6, rs: 3, lt: 2, ls: -1 }),
         P(LG.straight, AR.up)] },
-    { id: "single-arm-swing", name: "Single-arm swing", cat: "Kettlebell", def: { sets: "4", reps: "10 each side", weight: "16 kg", rest: "60 s" },
+    { id: "single-arm-swing", name: "Single-arm swing", cat: "Kettlebell", def: { sets: "4", reps: "10 each side", weight: "16 kg", rest: "60 s", note: "Keep the free arm out for balance" },
       props: [KB_R], poses: [
         P({ t: 120, h: 140, ra: -20, rf: -20, la: -70, lf: -70 }, LG.hinge),
         P({ t: 178, ra: 90, rf: 90, la: -75, lf: -75 }, LG.stand)] },
-    { id: "kb-deadlift", name: "Kettlebell deadlift", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "20 kg", rest: "60 s" },
+    { id: "kb-deadlift", name: "Kettlebell deadlift", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "20 kg", rest: "60 s", note: "Push the floor away, back flat" },
       props: [KB_B], poses: [
         P({ t: 125, h: 150, ra: 5, rf: 5, la: 3, lf: 3 }, LG.hingeLow),
         P({ ra: 3, rf: 3, la: 1, lf: 1 }, LG.stand)] },
-    { id: "suitcase-deadlift", name: "Suitcase deadlift", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "24 kg", rest: "60 s" },
+    { id: "suitcase-deadlift", name: "Suitcase deadlift", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "24 kg", rest: "60 s", note: "Stay tall, don't lean to the bell" },
       props: [KB_R], poses: [
         { t: 140, h: 155, rt: 60, rs: -18, lt: 56, ls: -20, ra: 5, rf: 5, la: 3, lf: 3 },
         P(LG.stand, AR.down)] },
-    { id: "kb-rdl", name: "Kettlebell RDL", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "20 kg", rest: "60 s" },
+    { id: "kb-rdl", name: "Kettlebell RDL", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "20 kg", rest: "60 s", note: "Soft knees, hips back, back flat" },
       props: [KB_B], poses: [
         P(LG.stand, AR.down),
         { t: 105, h: 125, rt: 12, rs: -4, lt: 10, ls: -6, ra: 5, rf: 5, la: 3, lf: 3 }] },
-    { id: "single-leg-deadlift", name: "Single-leg deadlift", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "16 kg", rest: "60 s" },
+    { id: "single-leg-deadlift", name: "Single-leg deadlift", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "16 kg", rest: "60 s", note: "Hips square, back leg in line" },
       props: [KB_R], poses: [
         P(LG.stand, AR.down),
         { t: 100, h: 105, rt: 5, rs: -3, lt: -105, ls: -105, ra: 5, rf: 5, la: -20, lf: -20 }] },
-    { id: "sumo-deadlift", name: "Sumo deadlift", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "24 kg", rest: "60 s" },
+    { id: "sumo-deadlift", name: "Sumo deadlift", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "24 kg", rest: "60 s", note: "Wide stance, chest up, push the floor" },
       props: [KB_B], poses: [
         P({ t: 178, h: 178, ra: 3, rf: 3, la: -3, lf: -3 }, LG.sumoSquat),
         P({ t: 180, ra: 3, rf: 3, la: -3, lf: -3 }, LG.sumoStand)] },
-    { id: "goblet-squat", name: "Goblet squat", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "16 kg", rest: "60 s" },
+    { id: "goblet-squat", name: "Goblet squat", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "16 kg", rest: "60 s", note: "Elbows inside the knees, chest up" },
       props: [KB_B], poses: [
         P(LG.stand, AR.goblet),
         P({ t: 155, h: 165 }, LG.deep, AR.goblet)] },
-    { id: "sumo-goblet", name: "Sumo goblet squat", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "20 kg", rest: "60 s" },
+    { id: "sumo-goblet", name: "Sumo goblet squat", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "20 kg", rest: "60 s", note: "Toes out, knees track over the toes" },
       props: [KB_B], poses: [
         P(LG.sumoStand, AR.fgob),
         P({ t: 178 }, LG.sumoSquat, AR.fgob)] },
-    { id: "goblet-lunge", name: "Goblet reverse lunge", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "16 kg", rest: "60 s" },
+    { id: "goblet-lunge", name: "Goblet reverse lunge", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "16 kg", rest: "60 s", note: "Step back, front knee over the ankle" },
       props: [KB_B], poses: [P(LG.stand, AR.goblet), P(LG.lunge, AR.goblet)] },
-    { id: "goblet-lateral", name: "Goblet lateral lunge", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "16 kg", rest: "60 s" },
+    { id: "goblet-lateral", name: "Goblet lateral lunge", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "16 kg", rest: "60 s", note: "Sit back into one hip, other leg long" },
       props: [KB_B], poses: [
         P(LG.front, AR.fgob),
         P({ rt: 65, rs: -5, lt: -45, ls: -45 }, AR.fgob)] },
-    { id: "rack-squat", name: "Rack squat", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "16 kg", rest: "60 s" },
+    { id: "rack-squat", name: "Rack squat", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "16 kg", rest: "60 s", note: "Bell on the forearm, elbow tucked" },
       props: [KB_R], poses: [
         P(LG.stand, AR.rackR),
         P({ t: 160, h: 170 }, LG.deep, AR.rackR)] },
-    { id: "rack-lunge", name: "Rack lunge", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "16 kg", rest: "60 s" },
+    { id: "rack-lunge", name: "Rack lunge", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "16 kg", rest: "60 s", note: "Elbow tucked, torso upright" },
       props: [KB_R], poses: [P(LG.stand, AR.rackR), P(LG.lunge, AR.rackR)] },
-    { id: "overhead-squat", name: "Overhead squat", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "12 kg", rest: "60 s" },
+    { id: "overhead-squat", name: "Overhead squat", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "12 kg", rest: "60 s", note: "Arm locked out, ribs down" },
       props: [KB_R], poses: [
         P(LG.stand, AR.overR),
         P({ t: 165, h: 170 }, LG.deep, AR.overR)] },
-    { id: "overhead-lunge", name: "Overhead lunge", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "12 kg", rest: "60 s" },
+    { id: "overhead-lunge", name: "Overhead lunge", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "12 kg", rest: "60 s", note: "Biceps by the ear, ribs down" },
       props: [KB_R], poses: [P(LG.stand, AR.overR), P(LG.lunge, AR.overR)] },
-    { id: "kb-clean", name: "Kettlebell clean", cat: "Kettlebell", def: { sets: "4", reps: "8 each side", weight: "16 kg", rest: "60 s" },
+    { id: "kb-clean", name: "Kettlebell clean", cat: "Kettlebell", def: { sets: "4", reps: "8 each side", weight: "16 kg", rest: "60 s", note: "Zip the bell up close to the body" },
       props: [KB_R], poses: [
         P({ t: 120, h: 140, ra: -20, rf: -20, la: -60, lf: -60 }, LG.hinge),
         P({ t: 178, ra: 55, rf: 70, la: -40, lf: -40 }, LG.stand),
         P(LG.stand, AR.rackR)] },
-    { id: "kb-clean-press", name: "Clean and press", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "12 kg", rest: "60 s" },
+    { id: "kb-clean-press", name: "Clean and press", cat: "Kettlebell", def: { sets: "3", reps: "8 each side", weight: "12 kg", rest: "60 s", note: "Clean to the rack, then press" },
       props: [KB_R], poses: [
         P(LG.stand, AR.down),
         P({ ra: 15, rf: 160, la: 4, lf: 4 }, LG.stand),
         P({ ra: 176, rf: 176, la: -30, lf: -30 }, LG.stand)] },
-    { id: "kb-press", name: "Strict press", cat: "Kettlebell", def: { sets: "4", reps: "6 each side", weight: "16 kg", rest: "75 s" },
+    { id: "kb-press", name: "Strict press", cat: "Kettlebell", def: { sets: "4", reps: "6 each side", weight: "16 kg", rest: "75 s", note: "Squeeze the glutes, press tall" },
       props: [KB_R], poses: [P(LG.stand, AR.rackR), P(LG.stand, AR.overR)] },
     { id: "kb-two-hand-press", name: "Two-hand overhead press", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s", note: "Hold the bell by the horns, press tall" },
       props: [KB_B], poses: [
         P(LG.stand, AR.goblet),
         P(LG.stand, { ra: 125, rf: 168, la: 123, lf: 166 }),
         P(LG.straight, AR.up)] },
-    { id: "kb-push-press", name: "Push press", cat: "Kettlebell", def: { sets: "4", reps: "6 each side", weight: "16 kg", rest: "75 s" },
+    { id: "kb-push-press", name: "Push press", cat: "Kettlebell", def: { sets: "4", reps: "6 each side", weight: "16 kg", rest: "75 s", note: "Dip, drive up, lock out overhead" },
       props: [KB_R], poses: [
         P(LG.stand, AR.rackR),
         P({ rt: 30, rs: -8, lt: 26, ls: -10 }, AR.rackR),
         P({ air: 4 }, LG.straight, AR.overR)] },
-    { id: "kb-thruster", name: "Kettlebell thruster", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s" },
+    { id: "kb-thruster", name: "Kettlebell thruster", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s", note: "Drive out of the squat into the press" },
       props: [KB_B], poses: [
         P({ t: 155, h: 165 }, LG.deep, AR.goblet),
         P({ t: 170, h: 175, rt: 40, rs: -12, lt: 36, ls: -14 }, AR.goblet),
         P(LG.straight, AR.up)] },
-    { id: "kb-snatch", name: "Kettlebell snatch", cat: "Kettlebell", def: { sets: "4", reps: "8 each side", weight: "16 kg", rest: "75 s" },
+    { id: "kb-snatch", name: "Kettlebell snatch", cat: "Kettlebell", def: { sets: "4", reps: "8 each side", weight: "16 kg", rest: "75 s", note: "Pull high, punch through to the top" },
       props: [KB_R], poses: [
         P({ t: 120, h: 140, ra: -20, rf: -20, la: -60, lf: -60 }, LG.hinge),
         P({ t: 178, ra: 100, rf: 150, la: -60, lf: -60 }, LG.stand),
@@ -2228,7 +2230,7 @@ const LIB_SRC = [
       props: [KB_B], poses: [
         P(LG.stand, AR.down),
         P({ ra: 152, rf: -8, la: 150, lf: -10 }, LG.stand)] },
-    { id: "kb-row", name: "Kettlebell row", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "16 kg", rest: "60 s" },
+    { id: "kb-row", name: "Kettlebell row", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "16 kg", rest: "60 s", note: "Flat back, pull the elbow to the hip" },
       props: [KB_R], poses: [
         P({ t: 115, h: 140, ra: 5, rf: 5, la: 30, lf: 25 }, ROW_LEGS),
         P({ t: 115, h: 140, ra: -110, rf: 0, la: 30, lf: 25 }, ROW_LEGS)] },
@@ -2237,7 +2239,7 @@ const LIB_SRC = [
         P(LG.stand, AR.goblet),
         P(LG.stand, { ra: 140, rf: 165, la: 138, lf: 163 }),
         P(LG.stand, { ra: 150, rf: -78, la: 148, lf: -80 })] },
-    { id: "kb-seated-side-halo", name: "Seated side-to-side + halo", cat: "Kettlebell", def: { sets: "3", reps: "8 each way", weight: "8 kg", rest: "45 s", note: "Touch down, halo through the middle, touch the other side" },
+    { id: "kb-seated-side-halo", name: "Seated side-to-side + halo", cat: "Kettlebell", def: { sets: "3", reps: "8 each way", weight: "8 kg", rest: "45 s", note: "Tap down, halo through, tap the other side" },
       props: [KB_B], poses: [
         { t: 180, h: 178, rt: 88, rs: 88, lt: 86, ls: 86, ra: 97, rf: 0, la: 95, lf: 0 },
         { t: 180, h: 178, rt: 88, rs: 88, lt: 86, ls: 86, ra: 176, rf: 176, la: 174, lf: 174 },
@@ -2262,7 +2264,7 @@ const LIB_SRC = [
         P(LG.stand, AR.down),
         P(LG.stand, { ra: 6, rf: 95, la: 4, lf: 93 }),
         P({ t: 170, h: 172 }, LG.stand, AR.goblet)] },
-    { id: "kb-front-raise", name: "Front goblet raise", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "8 kg", rest: "45 s", note: "Arms straight, to shoulder height" },
+    { id: "kb-front-raise", name: "Kettlebell front raise", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "8 kg", rest: "45 s", note: "Arms straight, to shoulder height" },
       props: [KB_B], poses: [
         P(LG.stand, AR.down),
         P(LG.stand, { ra: 45, rf: 45, la: 43, lf: 43 }),
@@ -2272,314 +2274,456 @@ const LIB_SRC = [
         P({ t: 178, h: 172 }, LG.front, { ra: 158, rf: 158, la: 156, lf: 156 }),
         P({ t: 165, h: 160 }, { rt: 20, rs: -6, lt: 16, ls: -8 }, { ra: 100, rf: 100, la: 98, lf: 98 }),
         P({ t: 135, h: 130 }, { rt: 50, rs: -14, lt: 46, ls: -16 }, { ra: 15, rf: 10, la: 13, lf: 8 })] },
-    { id: "kb-floor-press", name: "Floor press", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "16 kg", rest: "60 s" },
+    { id: "kb-floor-press", name: "Floor press", cat: "Kettlebell", def: { sets: "3", reps: "10 each side", weight: "16 kg", rest: "60 s", note: "Elbow to the floor, press straight up" },
       props: [KB_R, MAT], poses: [
         P(LYING, LG.lying, { ra: 180, rf: 180, la: 90, lf: 90 }),
         P(LYING, LG.lying, { ra: 20, rf: 175, la: 90, lf: 90 })] },
-    { id: "kb-pullover", name: "Kettlebell pullover", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s" },
+    { id: "kb-pullover", name: "Kettlebell pullover", cat: "Kettlebell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s", note: "Keep the ribs down, arms long" },
       props: [KB_B, MAT], poses: [
         P(LYING, LG.lying, { ra: 180, rf: 180, la: 178, lf: 178 }),
         P(LYING, LG.lying, { ra: -105, rf: -105, la: -107, lf: -107 })] },
-    { id: "kb-bridge", name: "Kettlebell glute bridge", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "20 kg", rest: "45 s" },
+    { id: "kb-bridge", name: "Kettlebell glute bridge", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "20 kg", rest: "45 s", note: "Bell on the hips, squeeze at the top" },
       props: [KB_B, MAT], poses: [
         P(LYING, LG.lying, { ra: 90, rf: 90, la: 92, lf: 92 }),
         { t: -65.5, h: -90, rt: 114.5, rs: 0, lt: 112, ls: 0, ra: 114.5, rf: 114.5, la: 112, lf: 112 }] },
-    { id: "turkish-getup", name: "Turkish get-up", cat: "Kettlebell", def: { sets: "3", reps: "3 each side", weight: "12 kg", rest: "90 s", note: "Eyes on the bell" },
+    { id: "turkish-getup", name: "Turkish get-up", cat: "Kettlebell", def: { sets: "3", reps: "3 each side", weight: "12 kg", rest: "90 s", note: "Eyes on the bell, arm stays vertical" },
       props: [KB_R], poses: [
         P(LYING, { rt: 140, rs: 40, lt: 92, ls: 92, ra: 180, rf: 180, la: 80, lf: 80, props: [MAT] }),
         { t: -155, h: -165, rt: 140, rs: 40, lt: 92, ls: 92, ra: 180, rf: 180, la: -32, lf: -32, props: [MAT] },
         P(LG.stand, AR.overR)] },
-    { id: "kb-windmill", name: "Windmill", cat: "Kettlebell", def: { sets: "3", reps: "5 each side", weight: "8 kg", rest: "60 s" },
+    { id: "kb-windmill", name: "Windmill", cat: "Kettlebell", def: { sets: "3", reps: "5 each side", weight: "8 kg", rest: "60 s", note: "Hinge back, eyes on the bell" },
       props: [KB_R], poses: [
-        { t: 180, h: 180, rt: 15, rs: 10, lt: -15, ls: -10, ra: 178, rf: 178, la: -5, lf: -5 },
-        { t: -135, h: -150, rt: 15, rs: 10, lt: -15, ls: -10, ra: 178, rf: 178, la: -20, lf: -20 }] },
-    { id: "kb-tricep", name: "Overhead tricep extension", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "12 kg", rest: "45 s" },
+        { t: 180, h: 180, rt: 25, rs: 25, lt: -25, ls: -25, ra: 178, rf: 178, la: -5, lf: -5 },
+        { t: -90, h: -125, rt: 25, rs: 25, lt: -25, ls: -25, ra: 178, rf: 178, la: 37, lf: 37 }] },
+    { id: "kb-tricep", name: "Overhead tricep extension", cat: "Kettlebell", def: { sets: "3", reps: "12", weight: "12 kg", rest: "45 s", note: "Elbows in, lower behind the head" },
       props: [KB_B], poses: [
         P(LG.stand, { ra: 178, rf: 178, la: 176, lf: 176 }),
         P(LG.stand, { ra: 178, rf: -25, la: 176, lf: -27 })] },
-    { id: "farmer-carry", name: "Farmer carry", cat: "Kettlebell", def: { sets: "3", time: "30 s", weight: "2 x 16 kg", rest: "60 s" },
+    { id: "farmer-carry", name: "Farmer carry", cat: "Kettlebell", def: { sets: "3", time: "30 s", weight: "2 x 16 kg", rest: "60 s", note: "Tall posture, short quick steps" },
       props: [KB_R, KB_L], poses: [P(LG.stride1, AR.down), P(LG.stride2, AR.down)] },
-    { id: "suitcase-carry", name: "Suitcase carry", cat: "Kettlebell", def: { sets: "3", time: "30 s each side", weight: "24 kg", rest: "60 s" },
+    { id: "suitcase-carry", name: "Suitcase carry", cat: "Kettlebell", def: { sets: "3", time: "30 s each side", weight: "24 kg", rest: "60 s", note: "Stay upright, shoulders level" },
       props: [KB_R], poses: [P(LG.stride1, AR.down), P(LG.stride2, AR.down)] },
-    { id: "rack-carry", name: "Rack carry", cat: "Kettlebell", def: { sets: "3", time: "30 s each side", weight: "16 kg", rest: "60 s" },
+    { id: "rack-carry", name: "Rack carry", cat: "Kettlebell", def: { sets: "3", time: "30 s each side", weight: "16 kg", rest: "60 s", note: "Elbow tucked, ribs down" },
       props: [KB_R], poses: [P({ t: 178 }, LG.stride1, AR.rackR), P({ t: 178 }, LG.stride2, AR.rackR)] },
-    { id: "waiter-walk", name: "Waiter walk", cat: "Kettlebell", def: { sets: "3", time: "30 s each side", weight: "12 kg", rest: "60 s" },
+    { id: "waiter-walk", name: "Waiter walk", cat: "Kettlebell", def: { sets: "3", time: "30 s each side", weight: "12 kg", rest: "60 s", note: "Arm locked out, shoulder packed" },
       props: [KB_R], poses: [P(LG.stride1, AR.overR), P(LG.stride2, AR.overR)] },
-    { id: "goblet-carry", name: "Goblet carry", cat: "Kettlebell", def: { sets: "3", time: "40 s", weight: "20 kg", rest: "60 s" },
+    { id: "goblet-carry", name: "Goblet carry", cat: "Kettlebell", def: { sets: "3", time: "40 s", weight: "20 kg", rest: "60 s", note: "Hug the bell close to the chest" },
       props: [KB_B], poses: [P(LG.stride1, AR.goblet), P(LG.stride2, AR.goblet)] },
-    { id: "double-clean", name: "Double clean", cat: "Kettlebell", def: { sets: "4", reps: "6", weight: "2 x 16 kg", rest: "90 s" },
+    { id: "double-clean", name: "Double clean", cat: "Kettlebell", def: { sets: "4", reps: "6", weight: "2 x 16 kg", rest: "90 s", note: "Both bells close, catch in the rack" },
       props: [KB_R, KB_L], poses: [
         HINGE_K,
         P({ t: 178, ra: 55, rf: 70, la: 53, lf: 68 }, LG.stand),
         P(LG.stand, AR.rackB)] },
-    { id: "double-front-squat", name: "Double front squat", cat: "Kettlebell", def: { sets: "4", reps: "8", weight: "2 x 16 kg", rest: "90 s" },
+    { id: "double-front-squat", name: "Double front squat", cat: "Kettlebell", def: { sets: "4", reps: "8", weight: "2 x 16 kg", rest: "90 s", note: "Elbows high, stay upright" },
       props: [KB_R, KB_L], poses: [
         P(LG.stand, AR.rackB),
         P({ t: 160, h: 170 }, LG.deep, AR.rackB)] },
-    { id: "double-press", name: "Double press", cat: "Kettlebell", def: { sets: "4", reps: "6", weight: "2 x 16 kg", rest: "90 s" },
+    { id: "double-press", name: "Double press", cat: "Kettlebell", def: { sets: "4", reps: "6", weight: "2 x 16 kg", rest: "90 s", note: "Press both bells in a straight line" },
       props: [KB_R, KB_L], poses: [P(LG.stand, AR.rackB), P(LG.stand, AR.up)] },
-    { id: "double-deadlift", name: "Double deadlift", cat: "Kettlebell", def: { sets: "4", reps: "8", weight: "2 x 24 kg", rest: "90 s" },
+    { id: "double-deadlift", name: "Double deadlift", cat: "Kettlebell", def: { sets: "4", reps: "8", weight: "2 x 24 kg", rest: "90 s", note: "Bells between the feet, back flat" },
       props: [KB_R, KB_L], poses: [
         P({ t: 125, h: 150, ra: 5, rf: 5, la: 3, lf: 3 }, LG.hingeLow),
         P(LG.stand, AR.down)] },
 
     /* ---------- Dumbbell ---------- */
-    { id: "overhead-press", name: "Dumbbell press", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s" },
+    { id: "overhead-press", name: "Dumbbell press", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s", note: "Ribs down, press in a straight line" },
       props: [DB_B], poses: [
         P({ ra: 55, rf: 178, la: -55, lf: -178 }, LG.front),
         P({ ra: 170, rf: 176, la: -170, lf: -176 }, LG.front)] },
-    { id: "db-bench", name: "Dumbbell bench press", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "16 kg", rest: "75 s" },
+    { id: "db-bench", name: "Dumbbell bench press", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "16 kg", rest: "75 s", note: "Feet planted, lower to the chest" },
       props: [BENCH, DB_B], poses: [
         { t: -90, h: -90, rt: 105, rs: 10, lt: 101, ls: 12, ra: 180, rf: 180, la: 178, lf: 178 },
         { t: -90, h: -90, rt: 105, rs: 10, lt: 101, ls: 12, ra: 20, rf: 175, la: 18, lf: 173 }] },
-    { id: "bent-row", name: "Bent-over row", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s" },
+    { id: "bent-row", name: "Bent-over row", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "12 kg", rest: "60 s", note: "Flat back, pull the elbows past the ribs" },
       props: [DB_B], poses: [
         P({ t: 115, h: 140, ra: 5, rf: 5, la: 3, lf: 3 }, ROW_LEGS),
         P({ t: 115, h: 140, ra: -110, rf: 0, la: -112, lf: 2 }, ROW_LEGS)] },
-    { id: "bicep-curl", name: "Bicep curl", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "8 kg", rest: "45 s" },
+    { id: "bicep-curl", name: "Bicep curl", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "8 kg", rest: "45 s", note: "Elbows still, don't swing" },
       props: [DB_B], poses: [
         P(LG.stand, AR.down),
         P({ ra: 8, rf: 150, la: 6, lf: 148 }, LG.stand)] },
-    { id: "lateral-raise", name: "Lateral raise", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "6 kg", rest: "45 s" },
+    { id: "lateral-raise", name: "Lateral raise", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "6 kg", rest: "45 s", note: "Lead with the elbows, to shoulder height" },
       props: [DB_B], poses: [
         P({ ra: 8, rf: 8, la: -8, lf: -8 }, LG.front),
         P({ ra: 85, rf: 85, la: -85, lf: -85 }, LG.front)] },
-    { id: "front-raise", name: "Front raise", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "6 kg", rest: "45 s" },
+    { id: "front-raise", name: "Front raise", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "6 kg", rest: "45 s", note: "Slow and controlled, no swinging" },
       props: [DB_B], poses: [P(LG.stand, AR.down), P(LG.stand, AR.fwd)] },
-    { id: "tricep-kickback", name: "Tricep kickback", cat: "Dumbbell", def: { sets: "3", reps: "12 each side", weight: "6 kg", rest: "45 s" },
+    { id: "tricep-kickback", name: "Tricep kickback", cat: "Dumbbell", def: { sets: "3", reps: "12 each side", weight: "6 kg", rest: "45 s", note: "Upper arm still, straighten the elbow" },
       props: [DB_R], poses: [
         P({ t: 115, h: 140, ra: -65, rf: 5, la: 30, lf: 25 }, ROW_LEGS),
         P({ t: 115, h: 140, ra: -65, rf: -65, la: 30, lf: 25 }, ROW_LEGS)] },
-    { id: "db-tricep", name: "Overhead tricep extension (db)", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "10 kg", rest: "45 s" },
+    { id: "db-tricep", name: "Overhead tricep extension (db)", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "10 kg", rest: "45 s", note: "Elbows in, lower behind the head" },
       props: [DB_B], poses: [
         P(LG.stand, { ra: 178, rf: 178, la: 176, lf: 176 }),
         P(LG.stand, { ra: 178, rf: -25, la: 176, lf: -27 })] },
-    { id: "db-squat", name: "Dumbbell squat", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "12 kg", rest: "60 s" },
+    { id: "db-squat", name: "Dumbbell squat", cat: "Dumbbell", def: { sets: "3", reps: "12", weight: "12 kg", rest: "60 s", note: "Chest up, knees over the toes" },
       props: [DB_B], poses: [
         P(LG.stand, AR.down),
         P({ t: 150, h: 160 }, LG.squat, AR.down)] },
-    { id: "db-lunge", name: "Dumbbell lunge", cat: "Dumbbell", def: { sets: "3", reps: "10 each side", weight: "10 kg", rest: "60 s" },
+    { id: "db-lunge", name: "Dumbbell lunge", cat: "Dumbbell", def: { sets: "3", reps: "10 each side", weight: "10 kg", rest: "60 s", note: "Long step, front knee over the ankle" },
       props: [DB_B], poses: [P(LG.stand, AR.down), P(LG.lunge, AR.down)] },
-    { id: "db-deadlift", name: "Dumbbell deadlift", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "16 kg", rest: "60 s" },
+    { id: "db-deadlift", name: "Dumbbell deadlift", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "16 kg", rest: "60 s", note: "Push the floor away, back flat" },
       props: [DB_B], poses: [
         P({ t: 125, h: 150, ra: 5, rf: 5, la: 3, lf: 3 }, LG.hingeLow),
         P(LG.stand, AR.down)] },
-    { id: "db-rdl", name: "Dumbbell RDL", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "16 kg", rest: "60 s" },
+    { id: "db-rdl", name: "Dumbbell RDL", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "16 kg", rest: "60 s", note: "Soft knees, weights slide down the legs" },
       props: [DB_B], poses: [
         P(LG.stand, AR.down),
         { t: 105, h: 125, rt: 12, rs: -4, lt: 10, ls: -6, ra: 5, rf: 5, la: 3, lf: 3 }] },
+    { id: "skull-crusher", name: "Skull crusher", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "8 kg", rest: "60 s", note: "Only the forearms move" },
+      props: [BENCH, DB_B], poses: [
+        { t: -90, h: -90, rt: 105, rs: 10, lt: 101, ls: 12, ra: 180, rf: 180, la: 178, lf: 178 },
+        { t: -90, h: -90, rt: 105, rs: 10, lt: 101, ls: 12, ra: 178, rf: -105, la: 176, lf: -107 }] },
+    { id: "renegade-row", name: "Renegade row", cat: "Dumbbell", def: { sets: "3", reps: "8 each side", weight: "10 kg", rest: "75 s", note: "Hips square, feet wide" },
+      props: [DB_B, MAT], poses: [
+        PLANK_UP,
+        P(PLANK_UP, { la: -115, lf: 5 })] },
+    { id: "db-thruster", name: "Dumbbell thruster", cat: "Dumbbell", def: { sets: "3", reps: "10", weight: "8 kg", rest: "60 s", note: "Drive up through the heels" },
+      props: [DB_B], poses: [
+        P({ t: 155, h: 165 }, LG.deep, AR.rackB),
+        P({ t: 170, h: 175, rt: 40, rs: -12, lt: 36, ls: -14 }, AR.rackB),
+        P(LG.straight, AR.up)] },
+    { id: "db-bench-row", name: "Single-arm bench row", cat: "Dumbbell", def: { sets: "3", reps: "10 each side", weight: "14 kg", rest: "60 s", note: "Pull the elbow to your hip" },
+      props: [{ k: "db", at: "l" }], poses: [
+        { t: 115, h: 130, rt: 35, rs: -90, lt: -12, ls: -12, ra: 0, rf: 0, la: 8, lf: 8, props: [{ k: "bench", ox: 18, y: 124 }] },
+        { t: 115, h: 130, rt: 35, rs: -90, lt: -12, ls: -12, ra: 0, rf: 0, la: -105, lf: 5, props: [{ k: "bench", ox: 18, y: 124 }] }] },
 
     /* ---------- Barbell ---------- */
-    { id: "bench-press", name: "Bench press", cat: "Barbell", def: { sets: "4", reps: "8", weight: "40 kg", rest: "90 s" },
+    { id: "bench-press", name: "Bench press", cat: "Barbell", def: { sets: "4", reps: "8", weight: "40 kg", rest: "90 s", note: "Shoulder blades back, feet planted" },
       props: [BENCH, { k: "plate", at: "b" }], poses: [
         { t: -90, h: -90, rt: 105, rs: 10, lt: 101, ls: 12, ra: 180, rf: 180, la: 178, lf: 178 },
         { t: -90, h: -90, rt: 105, rs: 10, lt: 101, ls: 12, ra: 20, rf: 175, la: 18, lf: 173 }] },
-    { id: "deadlift", name: "Barbell deadlift", cat: "Barbell", def: { sets: "4", reps: "6", weight: "60 kg", rest: "90 s" },
+    { id: "deadlift", name: "Barbell deadlift", cat: "Barbell", def: { sets: "4", reps: "6", weight: "60 kg", rest: "90 s", note: "Bar over mid-foot, back flat" },
       props: [{ k: "plate", at: "b" }], poses: [
         P({ t: 125, h: 150, ra: 5, rf: 5, la: 3, lf: 3 }, LG.hingeLow),
         P({ ra: 3, rf: 3, la: 1, lf: 1 }, LG.stand)] },
-    { id: "bb-rdl", name: "Barbell RDL", cat: "Barbell", def: { sets: "3", reps: "8", weight: "40 kg", rest: "90 s" },
+    { id: "bb-rdl", name: "Barbell RDL", cat: "Barbell", def: { sets: "3", reps: "8", weight: "40 kg", rest: "90 s", note: "Soft knees, bar slides down the legs" },
       props: [{ k: "plate", at: "b" }], poses: [
         P(LG.stand, AR.down),
         { t: 105, h: 125, rt: 12, rs: -4, lt: 10, ls: -6, ra: 5, rf: 5, la: 3, lf: 3 }] },
-    { id: "bb-row", name: "Barbell row", cat: "Barbell", def: { sets: "4", reps: "8", weight: "40 kg", rest: "90 s" },
+    { id: "bb-row", name: "Barbell row", cat: "Barbell", def: { sets: "4", reps: "8", weight: "40 kg", rest: "90 s", note: "Flat back, pull to the lower ribs" },
       props: [{ k: "plate", at: "b" }], poses: [
         P({ t: 115, h: 140, ra: 5, rf: 5, la: 3, lf: 3 }, ROW_LEGS),
         P({ t: 115, h: 140, ra: -110, rf: 0, la: -112, lf: 2 }, ROW_LEGS)] },
-    { id: "bb-press", name: "Barbell overhead press", cat: "Barbell", def: { sets: "4", reps: "6", weight: "30 kg", rest: "90 s" },
+    { id: "bb-press", name: "Barbell overhead press", cat: "Barbell", def: { sets: "4", reps: "6", weight: "30 kg", rest: "90 s", note: "Squeeze the glutes, press overhead" },
       props: [{ k: "bb", at: "b" }], poses: [
         P({ ra: 55, rf: 178, la: -55, lf: -178 }, LG.front),
         P({ ra: 170, rf: 176, la: -170, lf: -176 }, LG.front)] },
+    { id: "bb-squat", name: "Back squat", cat: "Barbell", def: { sets: "4", reps: "6", weight: "40 kg", rest: "90 s", note: "Bar low on the back, chest up" },
+      props: [BB_B], poses: [
+        P(LG.stand, AR.bar),
+        P({ t: 150, h: 160 }, LG.squat, AR.bar)] },
+    { id: "bb-front-squat", name: "Front squat", cat: "Barbell", def: { sets: "4", reps: "6", weight: "40 kg", rest: "90 s", note: "Elbows high, bar on the front shoulders" },
+      props: [BB_B], poses: [
+        P(LG.stand, { ra: 70, rf: 178, la: 68, lf: 176 }),
+        P({ t: 165, h: 170 }, LG.squat, { ra: 70, rf: 178, la: 68, lf: 176 })] },
+    { id: "hip-thrust", name: "Barbell hip thrust", cat: "Barbell", def: { sets: "4", reps: "10", weight: "40 kg", rest: "90 s", note: "Chin tucked, squeeze at the top" },
+      props: [PLATE_B], poses: [
+        { dx: 20, t: -133, h: -130, rt: 135, rs: 25, lt: 132, ls: 23, ra: 90, rf: 90, la: 92, lf: 92, props: [{ k: "bench", ox: -64, y: 124 }] },
+        { dx: 20, t: -97, h: -105, rt: 90, rs: 0, lt: 88, ls: 2, ra: 90, rf: 90, la: 92, lf: 92, props: [{ k: "bench", ox: -71, y: 124 }] }] },
+    { id: "good-morning", name: "Good morning", cat: "Barbell", def: { sets: "3", reps: "10", weight: "30 kg", rest: "75 s", note: "Soft knees, push the hips back" },
+      props: [BB_B], poses: [
+        P(LG.stand, AR.bar),
+        P({ t: 105, h: 130 }, LG.hinge, AR.bar)] },
+    { id: "bb-hang-clean", name: "Hang clean", cat: "Barbell", def: { sets: "4", reps: "5", weight: "30 kg", rest: "90 s", note: "Jump the bar up, elbows fast under it" },
+      props: [BB_B], poses: [
+        P({ t: 120, h: 140 }, LG.hinge, AR.down),
+        P({ t: 178, h: 178, ra: 100, rf: -20, la: 98, lf: -22 }, LG.stand),
+        P({ t: 175, h: 175 }, { rt: 30, rs: -10, lt: 26, ls: -12 }, { ra: 50, rf: 175, la: 48, lf: 173 })] },
 
     /* ---------- Legs ---------- */
-    { id: "squat", name: "Squat", cat: "Legs", def: { sets: "3", reps: "15", rest: "45 s" }, poses: [
+    { id: "squat", name: "Squat", cat: "Legs", def: { sets: "3", reps: "15", rest: "45 s", note: "Weight in the heels, chest up" }, poses: [
         P(LG.stand, AR.fwd),
         P({ t: 140, h: 150 }, LG.squat, AR.fwd)] },
-    { id: "squat-hold", name: "Squat hold", cat: "Legs", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+    { id: "squat-hold", name: "Squat hold", cat: "Legs", def: { sets: "3", time: "30 s", rest: "30 s", note: "Thighs parallel, chest up" }, poses: [
         P({ t: 145, h: 155 }, LG.deep, AR.fwd)] },
-    { id: "sumo-squat", name: "Sumo squat", cat: "Legs", def: { sets: "3", reps: "15", rest: "45 s" }, poses: [
+    { id: "sumo-squat", name: "Sumo squat", cat: "Legs", def: { sets: "3", reps: "15", rest: "45 s", note: "Toes out, knees over the toes" }, poses: [
         P({ ra: 30, rf: 150, la: -30, lf: -150 }, LG.sumoStand),
         P({ t: 178, ra: 30, rf: 150, la: -30, lf: -150 }, LG.sumoSquat)] },
-    { id: "jump-squat", name: "Jump squat", cat: "Legs", def: { sets: "3", reps: "10", rest: "60 s" }, poses: [
+    { id: "jump-squat", name: "Jump squat", cat: "Legs", def: { sets: "3", reps: "10", rest: "60 s", note: "Land softly, sit straight back down" }, poses: [
         P({ t: 140, h: 150 }, LG.squat, AR.back),
         P({ air: 20 }, LG.straight, AR.up)] },
-    { id: "lunge", name: "Lunge", cat: "Legs", def: { sets: "3", reps: "10 each side", rest: "45 s" }, poses: [
+    { id: "lunge", name: "Lunge", cat: "Legs", def: { sets: "3", reps: "10 each side", rest: "45 s", note: "Back knee drops straight down" }, poses: [
         P(LG.stand, AR.hips), P(LG.lunge, AR.hips)] },
-    { id: "split-squat", name: "Split squat hold", cat: "Legs", def: { sets: "3", time: "30 s each side", rest: "30 s" }, poses: [
+    { id: "split-squat", name: "Split squat hold", cat: "Legs", def: { sets: "3", time: "30 s each side", rest: "30 s", note: "Torso upright, front heel down" }, poses: [
         P(LG.lunge, AR.hips)] },
-    { id: "jump-lunge", name: "Jump lunge", cat: "Legs", def: { sets: "3", reps: "10", rest: "60 s" }, poses: [
+    { id: "jump-lunge", name: "Jump lunge", cat: "Legs", def: { sets: "3", reps: "10", rest: "60 s", note: "Switch legs in the air, land soft" }, poses: [
         P(LG.lunge, AR.hips),
         { air: 22, rt: -25, rs: -100, lt: 75, ls: 0, ra: 60, rf: 100, la: -60, lf: -60 }] },
-    { id: "side-lunge", name: "Side lunge", cat: "Legs", def: { sets: "3", reps: "10 each side", rest: "45 s" }, poses: [
+    { id: "side-lunge", name: "Side lunge", cat: "Legs", def: { sets: "3", reps: "10 each side", rest: "45 s", note: "Sit back into one hip, other leg straight" }, poses: [
         P({ ra: 40, rf: 140, la: -40, lf: -140 }, LG.front),
         { rt: 65, rs: -5, lt: -45, ls: -45, ra: 40, rf: 140, la: -40, lf: -140 }] },
-    { id: "step-up", name: "Step-up", cat: "Legs", def: { sets: "3", reps: "10 each side", rest: "45 s" }, poses: [
+    { id: "step-up", name: "Step-up", cat: "Legs", def: { sets: "3", reps: "10 each side", rest: "45 s", note: "Drive through the lead heel" }, poses: [
         { rt: 85, rs: 5, lt: -3, ls: -3, ra: 40, rf: 90, la: 20, lf: 80, props: [{ k: "box", ox: 26, oy: 25 }] },
         { y: 86, rt: 2, rs: 2, lt: 90, ls: 10, ra: 40, rf: 90, la: -50, lf: 20, props: [{ k: "box", ox: 0, y: 130 }] }] },
-    { id: "box-jump", name: "Box jump", cat: "Legs", def: { sets: "3", reps: "6", rest: "75 s" }, poses: [
+    { id: "box-jump", name: "Box jump", cat: "Legs", def: { sets: "3", reps: "6", rest: "75 s", note: "Land softly, stand tall on top" }, poses: [
         { t: 140, h: 150, rt: 78, rs: -12, lt: 74, ls: -14, ra: -40, rf: -40, la: -45, lf: -45, dx: -22, props: [{ k: "box", x: 122, y: 110 }] },
         { y: 62, rt: 2, rs: 2, lt: -2, ls: -2, ra: 120, rf: 120, la: 116, lf: 116, dx: 42, props: [{ k: "box", x: 122, y: 110 }] }] },
-    { id: "wall-sit", name: "Wall sit", cat: "Legs", def: { sets: "3", time: "40 s", rest: "45 s" }, poses: [
+    { id: "wall-sit", name: "Wall sit", cat: "Legs", def: { sets: "3", time: "40 s", rest: "45 s", note: "Back flat to the wall, thighs parallel" }, poses: [
         { rt: 90, rs: 0, lt: 88, ls: 0, ra: 40, rf: 95, la: 38, lf: 93, props: [{ k: "wall", ox: -5 }] }] },
-    { id: "glute-bridge", name: "Glute bridge", cat: "Legs", def: { sets: "3", reps: "15", rest: "45 s" }, poses: [
+    { id: "glute-bridge", name: "Glute bridge", cat: "Legs", def: { sets: "3", reps: "15", rest: "45 s", note: "Press the heels, squeeze at the top" }, poses: [
         P(LYING, LG.lying, { ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }),
         { t: -65.5, h: -90, rt: 114.5, rs: 0, lt: 112, ls: 0, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
-    { id: "sl-bridge", name: "Single-leg glute bridge", cat: "Legs", def: { sets: "3", reps: "10 each side", rest: "45 s" }, poses: [
+    { id: "sl-bridge", name: "Single-leg glute bridge", cat: "Legs", def: { sets: "3", reps: "10 each side", rest: "45 s", note: "Hips level, press through one heel" }, poses: [
         { t: -65.5, h: -90, rt: 114.5, rs: 0, lt: 114.5, ls: 114.5, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
-    { id: "donkey-kick", name: "Donkey kick", cat: "Legs", def: { sets: "3", reps: "12 each side", rest: "30 s" }, poses: [
+    { id: "donkey-kick", name: "Donkey kick", cat: "Legs", def: { sets: "3", reps: "12 each side", rest: "30 s", note: "Keep the hips square, heel to the ceiling" }, poses: [
         P(QUAD, { props: [MAT] }),
         P(QUAD, { rt: -95, rs: 180, props: [MAT] })] },
+    { id: "pistol-squat", name: "Pistol squat", cat: "Legs", def: { sets: "3", reps: "5 each side", note: "Reach forward, keep the heel down" }, poses: [
+        P(LG.stand, AR.fwd, { lt: 85, ls: 85 }),
+        { t: 150, h: 160, rt: 100, rs: -20, lt: 88, ls: 88, ra: 90, rf: 90, la: 86, lf: 86 }] },
+    { id: "nordic-curl", name: "Nordic hamstring curl", cat: "Legs", def: { sets: "3", reps: "5", note: "Lower slowly, body in one line" }, poses: [
+        { t: 180, h: 178, rt: 0, rs: -90, lt: 2, ls: -90, ra: 30, rf: 150, la: 28, lf: 148, props: [MAT] },
+        { t: 125, h: 130, rt: -55, rs: -90, lt: -53, ls: -90, ra: 40, rf: 40, la: 38, lf: 38, props: [MAT] }] },
+    { id: "bulgarian-split", name: "Bulgarian split squat", cat: "Legs", def: { sets: "3", reps: "8 each side", note: "Back foot on the bench, shin upright" }, poses: [
+        { dx: 20, t: 178, h: 178, rt: 5, rs: 5, lt: -40, ls: -100, ra: -28, rf: 60, la: -30, lf: 58, props: [{ k: "bench", ox: -66, y: 124 }] },
+        { dx: 20, t: 175, h: 175, rt: 80, rs: -2, lt: -30, ls: -135, ra: -28, rf: 60, la: -30, lf: 58, props: [{ k: "bench", ox: -58, y: 124 }] }] },
+    { id: "lunge-knee-drive", name: "Lunge to knee drive", cat: "Legs", def: { sets: "3", reps: "8 each side", note: "Step back, then drive the knee up" }, poses: [
+        P(LG.lunge, AR.hips),
+        { t: 178, h: 178, rt: -3, rs: -3, lt: 100, ls: -10, ra: -50, rf: -10, la: 40, lf: 150 }] },
 
     /* ---------- Push ---------- */
-    { id: "push-up", name: "Push-up", cat: "Push", def: { sets: "3", reps: "12", rest: "45 s" }, poses: [
+    { id: "push-up", name: "Push-up", cat: "Push", def: { sets: "3", reps: "12", rest: "45 s", note: "Body in one line, chest to the floor" }, poses: [
         P({ props: [MAT] }, PLANK_UP),
         { t: 96, h: 92, rt: -84, rs: -84, lt: -83, ls: -83, ra: -118, rf: 5, la: -120, lf: 6, props: [MAT] }] },
-    { id: "knee-push-up", name: "Knee push-up", cat: "Push", def: { sets: "3", reps: "10", rest: "45 s" }, poses: [
+    { id: "knee-push-up", name: "Knee push-up", cat: "Push", def: { sets: "3", reps: "10", rest: "45 s", note: "Hips forward, chest to the floor" }, poses: [
         { t: 128, h: 120, rt: -52, rs: -125, lt: -51, ls: -124, ra: 0, rf: 0, la: 2, lf: 2, props: [MAT] },
         { t: 99, h: 95, rt: -81, rs: -125, lt: -80, ls: -124, ra: -118, rf: 5, la: -120, lf: 6, props: [MAT] }] },
+    { id: "pike-push-up", name: "Pike push-up", cat: "Push", def: { sets: "3", reps: "8", note: "Hips high, head lowers between the hands" }, poses: [
+        { t: 53, h: 30, rt: -28, rs: -28, lt: -26, ls: -26, ra: 53, rf: 53, la: 51, lf: 51, props: [MAT] },
+        { t: 28, h: 15, rt: -28, rs: -28, lt: -26, ls: -26, ra: -115, rf: 5, la: -117, lf: 6, props: [MAT] }] },
+    { id: "decline-push-up", name: "Decline push-up", cat: "Push", def: { sets: "3", reps: "10", note: "Feet on the box, body in one line" }, poses: [
+        { t: 92, h: 90, rt: -88, rs: -88, lt: -87, ls: -87, ra: 0, rf: 0, la: 2, lf: 2, props: [{ k: "box", ox: -52, y: 116 }] },
+        { t: 76, h: 80, rt: -104, rs: -104, lt: -103, ls: -103, ra: -118, rf: 5, la: -120, lf: 6, props: [{ k: "box", ox: -52, y: 116 }] }] },
+    { id: "bench-dip", name: "Bench dip", cat: "Push", def: { sets: "3", reps: "10", note: "Elbows back, shoulders down" }, poses: [
+        { t: 180, h: 178, rt: 51, rs: 51, lt: 49, ls: 49, ra: 0, rf: 0, la: 2, lf: 2, props: [{ k: "bench", ox: -25, y: 124 }] },
+        { t: 180, h: 178, rt: 75, rs: 75, lt: 73, ls: 73, ra: -90, rf: 0, la: -92, lf: 2, props: [{ k: "bench", ox: -25, y: 124 }] }] },
 
     /* ---------- Pull ---------- */
-    { id: "pull-up", name: "Pull-up", cat: "Pull", def: { sets: "3", reps: "6", rest: "90 s" },
+    { id: "pull-up", name: "Pull-up", cat: "Pull", def: { sets: "3", reps: "6", rest: "90 s", note: "Start from a dead hang, chin over the bar" },
       props: [{ k: "pullbar", hand: true }], poses: [
         P({ air: 12, h: 178 }, LG.straight, { ra: 178, rf: 178, la: 176, lf: 176 }),
         { y: 58.4, h: 175, rt: 5, rs: -35, lt: -5, ls: -40, ra: 15, rf: 170, la: 13, lf: 168 }] },
-    { id: "hang-knee-raise", name: "Hanging knee raise", cat: "Pull", def: { sets: "3", reps: "10", rest: "60 s" },
+    { id: "hang-knee-raise", name: "Hanging knee raise", cat: "Pull", def: { sets: "3", reps: "10", rest: "60 s", note: "Curl the pelvis up, don't swing" },
       props: [{ k: "pullbar", hand: true }], poses: [
         { y: 92, h: 178, rt: 2, rs: 2, lt: -2, ls: -2, ra: 178, rf: 178, la: 176, lf: 176 },
         { y: 92, h: 178, t: 175, rt: 105, rs: 15, lt: 100, ls: 12, ra: 178, rf: 178, la: 176, lf: 176 }] },
-    { id: "hang-leg-raise", name: "Hanging leg raise", cat: "Pull", def: { sets: "3", reps: "8", rest: "60 s" },
+    { id: "hang-leg-raise", name: "Hanging leg raise", cat: "Pull", def: { sets: "3", reps: "8", rest: "60 s", note: "Straight legs up, control the way down" },
       props: [{ k: "pullbar", hand: true }], poses: [
         { y: 92, h: 178, rt: 2, rs: 2, lt: -2, ls: -2, ra: 178, rf: 178, la: 176, lf: 176 },
         { y: 92, h: 178, t: 172, rt: 88, rs: 88, lt: 84, ls: 84, ra: 178, rf: 178, la: 176, lf: 176 }] },
+    { id: "inverted-row", name: "Inverted row", cat: "Pull", def: { sets: "3", reps: "8", note: "Body straight, pull the chest to the bar" },
+      props: [{ k: "pullbar", hand: true }], poses: [
+        { t: -120, h: -125, rt: 60, rs: 60, lt: 58, ls: 58, ra: 178, rf: 178, la: 176, lf: 176 },
+        { t: -143, h: -148, rt: 37, rs: 37, lt: 35, ls: 35, ra: 10, rf: 170, la: 8, lf: 168 }] },
+    { id: "dead-hang", name: "Dead hang", cat: "Pull", def: { sets: "3", time: "30 s", rest: "60 s", note: "Shoulders active, grip the bar" },
+      props: [{ k: "pullbar", hand: true }], poses: [
+        { y: 92, h: 178, rt: 2, rs: 2, lt: -2, ls: -2, ra: 178, rf: 178, la: 176, lf: 176 }] },
 
     /* ---------- Core ---------- */
-    { id: "plank", name: "Plank", cat: "Core", def: { sets: "3", time: "45 s", rest: "30 s" }, poses: [
+    { id: "plank", name: "Plank", cat: "Core", def: { sets: "3", time: "45 s", rest: "30 s", note: "Squeeze the glutes, ribs down" }, poses: [
         { t: 103, h: 100, rt: -77, rs: -77, lt: -76, ls: -76, ra: 0, rf: 90, la: 2, lf: 92, props: [MAT] }] },
-    { id: "side-plank", name: "Side plank", cat: "Core", def: { sets: "3", time: "30 s each side", rest: "30 s" }, poses: [
+    { id: "side-plank", name: "Side plank", cat: "Core", def: { sets: "3", time: "30 s each side", rest: "30 s", note: "Hips high, body in one line" }, poses: [
         { t: -103, h: -100, rt: 77, rs: 77, lt: 77, ls: 77, ra: 0, rf: 90, la: 178, lf: 178, props: [MAT] }] },
-    { id: "bird-dog", name: "Bird dog", cat: "Core", def: { sets: "3", reps: "10 each side", rest: "30 s" }, poses: [
+    { id: "bird-dog", name: "Bird dog", cat: "Core", def: { sets: "3", reps: "10 each side", rest: "30 s", note: "Reach long, keep the hips level" }, poses: [
         P(QUAD, { props: [MAT] }),
         P(QUAD, { t: 100, h: 90, ra: 95, rf: 95, lt: -95, ls: -95, props: [MAT] })] },
-    { id: "crunch", name: "Crunch", cat: "Core", def: { sets: "3", reps: "15", rest: "30 s" }, poses: [
+    { id: "crunch", name: "Crunch", cat: "Core", def: { sets: "3", reps: "15", rest: "30 s", note: "Curl the ribs towards the hips" }, poses: [
         P(LYING, LG.lying, { ra: 100, rf: -150, la: 98, lf: -152, props: [MAT] }),
         { t: -132, h: -135, rt: 140, rs: 40, lt: 136, ls: 44, ra: 100, rf: -150, la: 98, lf: -152, props: [MAT] }] },
-    { id: "sit-up", name: "Sit-up", cat: "Core", def: { sets: "3", reps: "15", rest: "45 s" }, poses: [
+    { id: "sit-up", name: "Sit-up", cat: "Core", def: { sets: "3", reps: "15", rest: "45 s", note: "Curl up, control the way down" }, poses: [
         P({ t: -90, h: -90, ra: 100, rf: -150, la: 98, lf: -152, props: [MAT] }, LG.lying),
         P({ t: 170, h: 165, ra: 100, rf: -150, la: 98, lf: -152, props: [MAT] }, LG.lying)] },
-    { id: "bicycle", name: "Bicycle crunch", cat: "Core", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+    { id: "bicycle", name: "Bicycle crunch", cat: "Core", def: { sets: "3", time: "30 s", rest: "30 s", note: "Slow and steady, elbow to opposite knee" }, poses: [
         { t: -132, h: -135, rt: 130, rs: 40, lt: 100, ls: 100, ra: 100, rf: -150, la: 98, lf: -152, props: [MAT] },
         { t: -132, h: -135, rt: 100, rs: 100, lt: 128, ls: 38, ra: 100, rf: -150, la: 98, lf: -152, props: [MAT] }] },
-    { id: "flutter", name: "Flutter kicks", cat: "Core", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+    { id: "flutter", name: "Flutter kicks", cat: "Core", def: { sets: "3", time: "30 s", rest: "30 s", note: "Low back pressed down, small fast kicks" }, poses: [
         { t: -95, h: -100, rt: 118, rs: 118, lt: 100, ls: 100, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] },
         { t: -95, h: -100, rt: 100, rs: 100, lt: 118, ls: 118, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
-    { id: "leg-raise", name: "Leg raise", cat: "Core", def: { sets: "3", reps: "12", rest: "45 s" }, poses: [
+    { id: "leg-raise", name: "Leg raise", cat: "Core", def: { sets: "3", reps: "12", rest: "45 s", note: "Low back flat, lower slowly" }, poses: [
         { t: -90, h: -90, rt: 90, rs: 90, lt: 90, ls: 90, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] },
         { t: -90, h: -90, rt: 175, rs: 178, lt: 173, ls: 176, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
-    { id: "single-leg-raise", name: "Single-leg raise", cat: "Core", def: { sets: "3", reps: "10 each leg", rest: "45 s" }, poses: [
+    { id: "single-leg-raise", name: "Single-leg raise", cat: "Core", def: { sets: "3", reps: "10 each leg", rest: "45 s", note: "Low back flat, keep the legs long" }, poses: [
         { t: -90, h: -90, rt: 172, rs: 172, lt: 88, ls: 88, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] },
         { t: -90, h: -90, rt: 88, rs: 88, lt: 172, ls: 172, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
-    { id: "dead-bug", name: "Dead bug", cat: "Core", def: { sets: "3", reps: "10 each side", rest: "30 s" }, poses: [
+    { id: "dead-bug", name: "Dead bug", cat: "Core", def: { sets: "3", reps: "10 each side", rest: "30 s", note: "Low back pressed down, move slowly" }, poses: [
         P(LYING, LG.tabletop, { ra: 180, rf: 180, la: 178, lf: 178, props: [MAT] }),
-        P(LYING, { rt: 130, rs: 40, lt: 100, ls: 100, ra: -105, rf: -105, la: 178, lf: 178, props: [MAT] })] },
-    { id: "hollow-hold", name: "Hollow hold", cat: "Core", def: { sets: "3", time: "20 s", rest: "30 s" }, poses: [
+        P(LYING, { rt: 178, rs: 88, lt: 96, ls: 96, ra: -105, rf: -105, la: 178, lf: 178, props: [MAT] })] },
+    { id: "hollow-hold", name: "Hollow hold", cat: "Core", def: { sets: "3", time: "20 s", rest: "30 s", note: "Ribs down, low back pressed to the floor" }, poses: [
         { t: -125, h: -120, rt: 108, rs: 108, lt: 105, ls: 105, ra: -120, rf: -120, la: -122, lf: -122, props: [MAT] }] },
-    { id: "v-sit", name: "V-sit hold", cat: "Core", def: { sets: "3", time: "20 s", rest: "30 s" }, poses: [
+    { id: "v-sit", name: "V-sit hold", cat: "Core", def: { sets: "3", time: "20 s", rest: "30 s", note: "Chest tall, legs straight if you can" }, poses: [
         { t: -150, h: -155, rt: 130, rs: 130, lt: 126, ls: 126, ra: 95, rf: 95, la: 92, lf: 92, props: [MAT] }] },
-    { id: "pilates-hundred", name: "Pilates hundred", cat: "Core", def: { sets: "1", time: "50 s", rest: "30 s", note: "Pump the arms, breathe in 5 and out 5" }, poses: [
-        { t: -128, h: -122, rt: 135, rs: 135, lt: 133, ls: 133, ra: 82, rf: 82, la: 80, lf: 80, props: [MAT] },
-        { t: -128, h: -122, rt: 135, rs: 135, lt: 133, ls: 133, ra: 100, rf: 100, la: 98, lf: 98, props: [MAT] }] },
-    { id: "pilates-roll-up", name: "Roll-up", cat: "Core", def: { sets: "2", reps: "8", rest: "30 s", note: "Peel up one bone at a time" }, poses: [
-        P(LYING, { rt: 90, rs: 90, lt: 88, ls: 88, ra: -95, rf: -95, la: -97, lf: -97, props: [MAT] }),
-        P({ t: -140, h: -135, rt: 90, rs: 90, lt: 88, ls: 88, ra: 90, rf: 90, la: 88, lf: 88, props: [MAT] }),
-        P({ t: 100, h: 95, rt: 90, rs: 90, lt: 88, ls: 88, ra: 92, rf: 92, la: 90, lf: 90, props: [MAT] })] },
-    { id: "mountain-climber", name: "Mountain climber", cat: "Core", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+    { id: "mountain-climber", name: "Mountain climber", cat: "Core", def: { sets: "3", time: "30 s", rest: "30 s", note: "Hips low, drive the knees fast" }, poses: [
         P({ props: [MAT] }, PLANK_UP, { rt: 62, rs: -35 }),
         P({ props: [MAT] }, PLANK_UP, { lt: 60, ls: -37 })] },
-    { id: "superman", name: "Superman", cat: "Core", def: { sets: "3", reps: "12", rest: "30 s" }, poses: [
+    { id: "superman", name: "Superman", cat: "Core", def: { sets: "3", reps: "12", rest: "30 s", note: "Lift the chest and legs, squeeze the back" }, poses: [
         { t: 100, h: 85, ra: 120, rf: 125, la: 118, lf: 123, rt: -105, rs: -115, lt: -103, ls: -113, props: [MAT] }] },
+    { id: "reverse-crunch", name: "Reverse crunch", cat: "Core", def: { sets: "3", reps: "12", note: "Curl the hips up, no swinging" }, poses: [
+        { t: -90, h: -90, rt: 180, rs: 90, lt: 178, ls: 88, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] },
+        { t: -78, h: -82, rt: -160, rs: 60, lt: -162, ls: 58, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
+    { id: "bridge-march", name: "Bridge march", cat: "Core", def: { sets: "3", reps: "10 each side", note: "Keep the hips level and high" }, poses: [
+        { t: -65.5, h: -90, rt: 114.5, rs: 0, lt: 112, ls: 0, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] },
+        { t: -65.5, h: -90, rt: 178, rs: 90, lt: 112, ls: 0, ra: 90, rf: 90, la: 92, lf: 92, props: [MAT] }] },
+    { id: "plank-up-down", name: "Plank up-down", cat: "Core", def: { sets: "3", reps: "8", note: "One arm at a time, hips steady" }, poses: [
+        { t: 103, h: 100, rt: -77, rs: -77, lt: -76, ls: -76, ra: 0, rf: 90, la: 2, lf: 92, props: [MAT] },
+        P({ props: [MAT] }, PLANK_UP)] },
+
+    /* ---------- Pilates ---------- */
+    { id: "pilates-hundred", name: "Pilates hundred", cat: "Pilates", def: { time: "50 s", rest: "30 s", note: "Pump the arms, breathe in 5 and out 5" }, poses: [
+        { t: -128, h: -122, rt: 135, rs: 135, lt: 133, ls: 133, ra: 82, rf: 82, la: 80, lf: 80, props: [MAT] },
+        { t: -128, h: -122, rt: 135, rs: 135, lt: 133, ls: 133, ra: 100, rf: 100, la: 98, lf: 98, props: [MAT] }] },
+    { id: "pilates-roll-up", name: "Roll-up", cat: "Pilates", def: { sets: "2", reps: "8", rest: "30 s", note: "Peel up one bone at a time" }, poses: [
+        P(LYING, { rt: 90, rs: 90, lt: 88, ls: 88, ra: -95, rf: -95, la: -97, lf: -97, props: [MAT] }),
+        P({ t: -140, h: -135, rt: 90, rs: 90, lt: 88, ls: 88, ra: 90, rf: 90, la: 88, lf: 88, props: [MAT] }),
+        P({ t: 112, h: 105, rt: 90, rs: 90, lt: 88, ls: 88, ra: 70, rf: 75, la: 68, lf: 73, props: [MAT] })] },
+    { id: "single-leg-stretch", name: "Single-leg stretch", cat: "Pilates", def: { sets: "2", reps: "10 each leg", note: "Switch legs, chest stays lifted" }, poses: [
+        { t: -130, h: -125, rt: -165, rs: 40, lt: 128, ls: 128, ra: 55, rf: 95, la: 60, lf: 100, props: [MAT] },
+        { t: -130, h: -125, lt: -167, ls: 38, rt: 128, rs: 128, la: 55, lf: 95, ra: 60, rf: 100, props: [MAT] }] },
+    { id: "double-leg-stretch", name: "Double-leg stretch", cat: "Pilates", def: { sets: "2", reps: "8", note: "Reach out long, then circle in" }, poses: [
+        { t: -130, h: -125, rt: -165, rs: 40, lt: -167, ls: 38, ra: 65, rf: 105, la: 63, lf: 103, props: [MAT] },
+        { t: -130, h: -125, rt: 130, rs: 130, lt: 128, ls: 128, ra: -115, rf: -115, la: -117, lf: -117, props: [MAT] }] },
+    { id: "rolling-ball", name: "Rolling like a ball", cat: "Pilates", def: { sets: "2", reps: "8", note: "Round the back, roll to the shoulder blades" }, poses: [
+        { t: -150, h: 130, rt: 150, rs: -30, lt: 148, ls: -32, ra: 30, rf: 79, la: 28, lf: 77, props: [MAT] },
+        { t: -72, h: -80, rt: -150, rs: 20, lt: -152, ls: 18, ra: 150, rf: 107, la: 148, lf: 105, props: [MAT] }] },
+    { id: "pilates-swimming", name: "Swimming", cat: "Pilates", def: { sets: "2", time: "30 s", note: "Long limbs, alternate arm and leg" }, poses: [
+        { t: 100, h: 85, ra: 125, rf: 125, la: 95, lf: 95, rt: -92, rs: -92, lt: -110, ls: -112, props: [MAT] },
+        { t: 100, h: 85, la: 125, lf: 125, ra: 95, rf: 95, lt: -92, ls: -92, rt: -110, rs: -112, props: [MAT] }] },
+    { id: "leg-pull-front", name: "Leg pull front", cat: "Pilates", def: { sets: "2", reps: "6 each leg", note: "Plank tall, lift from the glute" }, poses: [
+        P({ props: [MAT] }, PLANK_UP, { lt: -97, ls: -97 }),
+        P({ props: [MAT] }, PLANK_UP, { rt: -97, rs: -97 })] },
+    { id: "leg-pull-back", name: "Leg pull back", cat: "Pilates", def: { sets: "2", reps: "6 each leg", note: "Hips high, lift one leg" }, poses: [
+        { t: -116, h: -120, rt: 64, rs: 64, lt: 62, ls: 62, ra: 0, rf: 0, la: 2, lf: 2, props: [MAT] },
+        { t: -116, h: -120, rt: 118, rs: 118, lt: 62, ls: 62, ra: 0, rf: 0, la: 2, lf: 2, props: [MAT] }] },
+    { id: "side-lying-leg-lift", name: "Side-lying leg lift", cat: "Pilates", def: { sets: "2", reps: "12 each side", note: "Top leg to hip height, hips stacked" }, poses: [
+        { t: -90, h: -90, rt: 88, rs: 88, lt: 86, ls: 86, ra: 95, rf: 95, la: -90, lf: -90, props: [MAT] },
+        { t: -90, h: -90, rt: 130, rs: 130, lt: 86, ls: 86, ra: 95, rf: 95, la: -90, lf: -90, props: [MAT] }] },
 
     /* ---------- Cardio ---------- */
-    { id: "jumping-jack", name: "Jumping jack", cat: "Cardio", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+    { id: "jumping-jack", name: "Jumping jack", cat: "Cardio", def: { sets: "3", time: "30 s", rest: "30 s", note: "Soft landings, arms fully overhead" }, poses: [
         P({ ra: 12, rf: 12, la: -12, lf: -12 }, LG.stand),
         { air: 4, rt: 18, rs: 18, lt: -18, ls: -18, ra: 150, rf: 150, la: -150, lf: -150 }] },
-    { id: "high-knees", name: "High knees", cat: "Cardio", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+    { id: "high-knees", name: "High knees", cat: "Cardio", def: { sets: "3", time: "30 s", rest: "30 s", note: "Knees to hip height, stay on the toes" }, poses: [
         { air: 5, t: 178, rt: 100, rs: -10, lt: -2, ls: -2, la: 40, lf: 150, ra: -50, rf: -10 },
         { air: 5, t: 178, lt: 100, ls: -10, rt: -2, rs: -2, ra: 40, rf: 150, la: -50, lf: -10 }] },
-    { id: "butt-kicks", name: "Butt kicks", cat: "Cardio", def: { sets: "3", time: "30 s", rest: "30 s" }, poses: [
+    { id: "butt-kicks", name: "Butt kicks", cat: "Cardio", def: { sets: "3", time: "30 s", rest: "30 s", note: "Heels to the glutes, quick feet" }, poses: [
         { air: 3, rt: -8, rs: -145, lt: -2, ls: -2, la: 40, lf: 150, ra: -50, rf: -10 },
         { air: 3, lt: -8, ls: -145, rt: -2, rs: -2, ra: 40, rf: 150, la: -50, lf: -10 }] },
-    { id: "sprint", name: "Sprint", cat: "Cardio", def: { sets: "6", time: "20 s", rest: "40 s" }, poses: [
+    { id: "sprint", name: "Sprint", cat: "Cardio", def: { sets: "6", time: "20 s", rest: "40 s", note: "Drive the arms, lean in from the ankles" }, poses: [
         { air: 8, t: 160, h: 165, rt: 70, rs: -20, lt: -35, ls: -60, ra: -60, rf: -10, la: 50, lf: 120 },
         { air: 8, t: 160, h: 165, lt: 70, ls: -20, rt: -35, rs: -60, la: -60, lf: -10, ra: 50, rf: 120 }] },
-    { id: "tuck-jump", name: "Tuck jump", cat: "Cardio", def: { sets: "3", reps: "8", rest: "60 s" }, poses: [
+    { id: "tuck-jump", name: "Tuck jump", cat: "Cardio", def: { sets: "3", reps: "8", rest: "60 s", note: "Knees to the chest, land softly" }, poses: [
         P({ t: 140, h: 150 }, LG.squat, AR.back),
         { air: 24, t: 172, rt: 100, rs: -5, lt: 98, ls: -7, ra: 60, rf: 90, la: 56, lf: 86 }] },
-    { id: "broad-jump", name: "Broad jump", cat: "Cardio", def: { sets: "3", reps: "6", rest: "60 s" }, poses: [
+    { id: "broad-jump", name: "Broad jump", cat: "Cardio", def: { sets: "3", reps: "6", rest: "60 s", note: "Swing the arms, stick the landing" }, poses: [
         P({ t: 140, h: 150 }, LG.squat, AR.back),
         { air: 22, t: 135, h: 130, rt: 40, rs: -5, lt: 36, ls: -8, ra: 130, rf: 130, la: 126, lf: 126 }] },
-    { id: "burpee", name: "Burpee", cat: "Cardio", def: { sets: "3", reps: "8", rest: "60 s" }, poses: [
+    { id: "burpee", name: "Burpee", cat: "Cardio", def: { sets: "3", reps: "8", rest: "60 s", note: "Chest to the floor, jump at the top" }, poses: [
         { t: 96, h: 92, rt: -84, rs: -84, lt: -83, ls: -83, ra: -118, rf: 5, la: -120, lf: 6 },
         { t: 98, h: 125, rt: 70, rs: -25, lt: 66, ls: -28, ra: 8, rf: 8, la: 6, lf: 6 },
         P({ air: 24, ra: 110, rf: -140, la: 108, lf: -138 }, LG.straight)] },
-    { id: "inchworm", name: "Inchworm", cat: "Cardio", def: { sets: "3", reps: "6", rest: "45 s" }, poses: [
+    { id: "inchworm", name: "Inchworm", cat: "Cardio", def: { sets: "3", reps: "6", rest: "45 s", note: "Walk out to a plank, legs stay straight" }, poses: [
         P(LG.stand, AR.down),
         { t: 69, h: 35, rt: 2, rs: 2, lt: -2, ls: -2, ra: 0, rf: 0, la: 2, lf: 2 },
         P({ props: [MAT] }, PLANK_UP)] },
-    { id: "jab-cross", name: "Jab and cross", cat: "Cardio", def: { sets: "3", time: "45 s", rest: "30 s" }, poses: [
+    { id: "jab-cross", name: "Jab and cross", cat: "Cardio", def: { sets: "3", time: "45 s", rest: "30 s", note: "Rotate the hips, guard stays up" }, poses: [
         { t: 175, h: 175, rt: 25, rs: 5, lt: -20, ls: -5, la: 88, lf: 88, ra: 25, rf: 150 },
         { t: 172, h: 175, rt: 25, rs: 5, lt: -20, ls: -5, ra: 90, rf: 90, la: 25, lf: 150 }] },
-    { id: "running", name: "Running", cat: "Cardio", def: { sets: "1", time: "20 min" }, poses: [
+    { id: "running", name: "Running", cat: "Cardio", def: { time: "20 min", note: "Relaxed shoulders, light quick steps" }, poses: [
         { air: 6, t: 172, h: 176, rt: 55, rs: -15, lt: -30, ls: -70, ra: -55, rf: -15, la: 45, lf: 110 },
         { air: 6, t: 172, h: 176, lt: 55, ls: -15, rt: -30, rs: -70, la: -55, lf: -15, ra: 45, rf: 110 }] },
-    { id: "jump-rope", name: "Jump rope", cat: "Cardio", def: { sets: "5", time: "60 s", rest: "30 s" }, poses: [
+    { id: "jump-rope", name: "Jump rope", cat: "Cardio", def: { sets: "5", time: "60 s", rest: "30 s", note: "Small jumps, wrists do the work" }, poses: [
         P(LG.front, { ra: 12, rf: 72, la: 10, lf: 70, props: [{ k: "ropeup" }] }),
         P({ air: 6, ra: 12, rf: 72, la: 10, lf: 70, rt: 8, rs: -22, lt: 4, ls: -26, props: [{ k: "ropedown" }] })] },
-    { id: "spin-bike", name: "Spinning", cat: "Cardio", def: { sets: "1", time: "30 min", note: "Seated climb, steady cadence" }, poses: [
+    { id: "spin-bike", name: "Spinning", cat: "Cardio", def: { time: "30 min", note: "Seated climb, steady cadence" }, poses: [
         { air: 8, t: 135, h: 150, rt: 85, rs: -2, lt: 42, ls: -10, ra: 21, rf: 90, la: 19, lf: 88, props: [{ k: "bike" }] },
         { air: 8, t: 135, h: 150, rt: 42, rs: -10, lt: 85, ls: -2, ra: 21, rf: 90, la: 19, lf: 88, props: [{ k: "bike" }] }] },
     { id: "rowing-machine", name: "Rowing machine", cat: "Cardio", def: { sets: "4", time: "2 min", rest: "60 s", note: "Legs, then body, then arms" }, poses: [
         { air: 12, t: 138, h: 150, rt: 128, rs: 12, lt: 124, ls: 10, ra: 98, rf: 92, la: 96, lf: 90, props: [{ k: "rower" }] },
         { air: 12, t: 166, h: 172, rt: 108, rs: 55, lt: 106, ls: 53, ra: 70, rf: 68, la: 68, lf: 66, props: [{ k: "rower" }] },
         { air: 12, t: -165, h: -172, rt: 85, rs: 80, lt: 83, ls: 78, ra: -40, rf: 95, la: -42, lf: 93, props: [{ k: "rower" }] }] },
+    { id: "bear-crawl", name: "Bear crawl", cat: "Cardio", def: { sets: "3", time: "30 s", rest: "45 s", note: "Knees hover, back flat" }, poses: [
+        { t: 90, h: 100, rt: 20, rs: -56, lt: 50, ls: -30, ra: 35, rf: 15, la: 0, lf: 0, props: [MAT] },
+        { t: 90, h: 100, lt: 20, ls: -56, rt: 50, rs: -30, la: 35, lf: 15, ra: 0, rf: 0, props: [MAT] }] },
+    { id: "ball-slam", name: "Medicine ball slam", cat: "Cardio", def: { sets: "3", reps: "10", weight: "6 kg", rest: "45 s", note: "Reach tall, slam through the floor" },
+      props: [BALL_B], poses: [
+        P(LG.straight, AR.up),
+        P({ t: 150, h: 160 }, LG.squat, { ra: 70, rf: 70, la: 68, lf: 68 }),
+        P({ t: 125, h: 140 }, LG.squat, { ra: 20, rf: 20, la: 18, lf: 18 })] },
+    { id: "wall-ball", name: "Wall ball", cat: "Cardio", def: { sets: "3", reps: "12", weight: "6 kg", rest: "60 s", note: "Squat deep, throw to the target" },
+      props: [BALL_B], poses: [
+        P({ t: 155, h: 165, props: [{ k: "wall", ox: 52 }] }, LG.deep, AR.goblet),
+        P({ props: [{ k: "wall", ox: 52 }] }, LG.straight, { ra: 150, rf: 150, la: 148, lf: 148 })] },
 
     /* ---------- Stretch ---------- */
-    { id: "quad-stretch", name: "Quad stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side" }, poses: [
+    { id: "quad-stretch", name: "Quad stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side", note: "Knees together, hips tucked under" }, poses: [
         { rt: 8, rs: -150, lt: -2, ls: -2, ra: -30, rf: -10, la: 80, lf: 80 }] },
-    { id: "hip-flexor", name: "Hip flexor stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side" }, poses: [
+    { id: "hip-flexor", name: "Hip flexor stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side", note: "Tuck the pelvis, lean gently forward" }, poses: [
         P(LG.lunge, AR.up)] },
-    { id: "childs-pose", name: "Child's pose", cat: "Stretch", def: { sets: "1", time: "45 s" }, poses: [
-        { t: 90, h: 90, rt: 90, rs: -90, lt: 88, ls: -90, ra: 90, rf: 90, la: 88, lf: 88, props: [MAT] }] },
-    { id: "cobra", name: "Cobra stretch", cat: "Stretch", def: { sets: "2", time: "30 s" }, poses: [
-        { t: 125, h: 140, rt: -90, rs: -90, lt: -88, ls: -88, ra: 57, rf: 57, la: 55, lf: 55, props: [MAT] }] },
-    { id: "forward-fold", name: "Forward fold", cat: "Stretch", def: { sets: "2", time: "30 s" }, poses: [
+    { id: "forward-fold", name: "Forward fold", cat: "Stretch", def: { sets: "2", time: "30 s", note: "Soft knees, let the head hang" }, poses: [
         { t: 69, h: 35, rt: 2, rs: 2, lt: -2, ls: -2, ra: 0, rf: 0, la: 2, lf: 2 }] },
-    { id: "seated-hamstring", name: "Seated hamstring stretch", cat: "Stretch", def: { sets: "2", time: "30 s" }, poses: [
-        { t: 108, h: 100, rt: 90, rs: 90, lt: 88, ls: 88, ra: 90, rf: 90, la: 88, lf: 88, props: [MAT] }] },
-    { id: "side-stretch", name: "Standing side stretch", cat: "Stretch", def: { sets: "2", time: "20 s each side" }, poses: [
+    { id: "seated-hamstring", name: "Seated hamstring stretch", cat: "Stretch", def: { sets: "2", time: "30 s", note: "Hinge from the hips, back long" }, poses: [
+        { t: 125, h: 120, rt: 90, rs: 90, lt: 88, ls: 88, ra: 40, rf: 60, la: 38, lf: 58, props: [MAT] }] },
+    { id: "side-stretch", name: "Standing side stretch", cat: "Stretch", def: { sets: "2", time: "20 s each side", note: "Reach up and over, stay tall" }, poses: [
         { t: -160, h: -162, rt: 5, rs: 5, lt: -5, ls: -5, ra: -170, rf: -170, la: -168, lf: -168 }] },
-    { id: "tricep-stretch", name: "Tricep stretch", cat: "Stretch", def: { sets: "2", time: "20 s each side" }, poses: [
+    { id: "tricep-stretch", name: "Tricep stretch", cat: "Stretch", def: { sets: "2", time: "20 s each side", note: "Elbow to the ceiling, gentle press" }, poses: [
         P(LG.stand, { ra: 178, rf: -25, la: 130, lf: 175 })] },
-    { id: "chest-stretch", name: "Chest stretch", cat: "Stretch", def: { sets: "2", time: "20 s" }, poses: [
+    { id: "chest-stretch", name: "Chest stretch", cat: "Stretch", def: { sets: "2", time: "20 s", note: "Open the chest, shoulders down" }, poses: [
         P(LG.stand, { ra: -45, rf: -45, la: -48, lf: -48 })] },
-    { id: "downward-dog", name: "Downward dog", cat: "Stretch", def: { sets: "2", time: "30 s" }, poses: [
-        { t: 53, h: 28, rt: -28, rs: -28, lt: -26, ls: -26, ra: 53, rf: 53, la: 51, lf: 51, props: [MAT] }] },
-    { id: "chair-pose", name: "Chair pose", cat: "Stretch", def: { sets: "2", time: "20 s" }, poses: [
-        P({ t: 158, h: 165, rt: 62, rs: -20, lt: 58, ls: -22 }, { ra: 158, rf: 158, la: 156, lf: 156 })] },
-    { id: "tree-pose", name: "Tree pose", cat: "Stretch", def: { sets: "2", time: "20 s each side" }, poses: [
-        { rt: 3, rs: 3, lt: -70, ls: 65, ra: 163, rf: 163, la: 161, lf: 161 }] },
-    { id: "knees-to-chest", name: "Knees to chest", cat: "Stretch", def: { sets: "2", time: "30 s" }, poses: [
-        { t: -90, h: -90, rt: 165, rs: -120, lt: 163, ls: -122, ra: 151, rf: 151, la: 149, lf: 149, props: [MAT] }] },
-    { id: "lying-hamstring", name: "Lying hamstring stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side" }, poses: [
+    { id: "knees-to-chest", name: "Knees to chest", cat: "Stretch", def: { sets: "2", time: "30 s", note: "Relax the shoulders, breathe slowly" }, poses: [
+        { t: -90, h: -90, rt: -142, rs: 30, lt: -144, ls: 28, ra: 140, rf: 100, la: 138, lf: 98, props: [MAT] }] },
+    { id: "lying-hamstring", name: "Lying hamstring stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side", note: "Keep the leg straight, hips level" }, poses: [
         { t: -90, h: -90, rt: 175, rs: 175, lt: 88, ls: 88, ra: 109, rf: 109, la: 107, lf: 107, props: [MAT] }] },
-    { id: "calf-stretch", name: "Calf stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side" }, poses: [
+    { id: "calf-stretch", name: "Calf stretch", cat: "Stretch", def: { sets: "2", time: "30 s each side", note: "Back heel down, hips forward" }, poses: [
         { t: 148, h: 148, rt: -38, rs: -38, lt: 62, ls: -10, ra: 100, rf: 100, la: 98, lf: 98, props: [{ k: "wall", hand: true, ox: 6 }] }] },
+    { id: "half-splits", name: "Half splits", cat: "Stretch", def: { sets: "2", time: "30 s each side", note: "Front heel down, hips back" }, poses: [
+        { t: 100, h: 100, rt: 63, rs: 63, lt: -20, ls: -105, ra: 25, rf: 60, la: 23, lf: 58, props: [MAT] }] },
+    { id: "biceps-wall-stretch", name: "Biceps wall stretch", cat: "Stretch", def: { sets: "2", time: "20 s each side", note: "Palm on the wall, turn away" }, poses: [
+        { t: 178, h: 175, rt: 3, rs: 3, lt: -3, ls: -3, ra: -110, rf: -110, la: 5, lf: 5, props: [{ k: "wall", ox: -34 }] }] },
+
+    /* ---------- Yoga ---------- */
+    { id: "chair-pose", name: "Chair pose", cat: "Yoga", def: { sets: "2", time: "20 s", note: "Sit back, weight in the heels" }, poses: [
+        P({ t: 158, h: 165, rt: 62, rs: -20, lt: 58, ls: -22 }, { ra: 158, rf: 158, la: 156, lf: 156 })] },
+    { id: "tree-pose", name: "Tree pose", cat: "Yoga", def: { sets: "2", time: "20 s each side", note: "Foot to the calf or thigh, never the knee" }, poses: [
+        { rt: 3, rs: 3, lt: -70, ls: 65, ra: 163, rf: 163, la: 161, lf: 161 }] },
+    { id: "warrior-1", name: "Warrior I", cat: "Yoga", def: { sets: "2", time: "30 s each side", note: "Front knee over the ankle, arms up" }, poses: [
+        { t: 180, h: 178, rt: 85, rs: 0, lt: -57, ls: -57, ra: 160, rf: 172, la: 158, lf: 170 }] },
+    { id: "warrior-2", name: "Warrior II", cat: "Yoga", def: { sets: "2", time: "30 s each side", note: "Arms long, gaze over the front hand" }, poses: [
+        { t: 180, h: 178, rt: 85, rs: 0, lt: -57, ls: -57, ra: 90, rf: 90, la: -90, lf: -90 }] },
+    { id: "warrior-3", name: "Warrior III", cat: "Yoga", def: { sets: "2", time: "20 s each side", note: "Hips level, body in a T" }, poses: [
+        { t: 90, h: 90, rt: 0, rs: 0, lt: -90, ls: -90, ra: 90, rf: 90, la: 88, lf: 88 }] },
+    { id: "triangle-pose", name: "Triangle pose", cat: "Yoga", def: { sets: "2", time: "30 s each side", note: "Long side, top arm to the sky" }, poses: [
+        { t: 105, h: 140, rt: 40, rs: 40, lt: -40, ls: -40, ra: 5, rf: 5, la: 178, lf: 178 }] },
+    { id: "side-angle", name: "Extended side angle", cat: "Yoga", def: { sets: "2", time: "30 s each side", note: "Forearm on the thigh, reach long" }, poses: [
+        { t: 123, h: 150, rt: 88, rs: 2, lt: -57, ls: -57, ra: 20, rf: 15, la: 123, lf: 123 }] },
+    { id: "downward-dog", name: "Downward dog", cat: "Yoga", def: { sets: "2", time: "30 s", note: "Press the floor away, heels reaching down" }, poses: [
+        { t: 53, h: 28, rt: -28, rs: -28, lt: -26, ls: -26, ra: 53, rf: 53, la: 51, lf: 51, props: [MAT] }] },
+    { id: "upward-dog", name: "Upward-facing dog", cat: "Yoga", def: { sets: "2", time: "20 s", note: "Thighs off the floor, shoulders down" }, poses: [
+        { t: 145, h: 160, rt: -80, rs: -80, lt: -79, ls: -79, ra: 0, rf: 0, la: 2, lf: 2, props: [MAT] }] },
+    { id: "dolphin", name: "Dolphin pose", cat: "Yoga", def: { sets: "2", time: "30 s", note: "Forearms down, hips high" }, poses: [
+        { t: 53, h: 30, rt: -36, rs: -36, lt: -35, ls: -35, ra: 5, rf: 88, la: 7, lf: 90, props: [MAT] }] },
+    { id: "puppy-pose", name: "Puppy pose", cat: "Yoga", def: { sets: "2", time: "30 s", note: "Hips over knees, chest melts down" }, poses: [
+        { t: 59, h: 100, rt: 0, rs: -90, lt: 2, ls: -90, ra: 80, rf: 80, la: 78, lf: 78, props: [MAT] }] },
+    { id: "childs-pose", name: "Child's pose", cat: "Yoga", def: { time: "45 s", note: "Sink the hips back, arms long" }, poses: [
+        { t: 82, h: 95, rt: 60, rs: -90, lt: 58, ls: -90, ra: 85, rf: 85, la: 83, lf: 83, props: [MAT] }] },
+    { id: "cobra", name: "Cobra stretch", cat: "Yoga", def: { sets: "2", time: "30 s", note: "Hips down, chest lifted, shoulders back" }, poses: [
+        { t: 125, h: 140, rt: -90, rs: -90, lt: -88, ls: -88, ra: 57, rf: 57, la: 55, lf: 55, props: [MAT] }] },
+    { id: "sphinx", name: "Sphinx pose", cat: "Yoga", def: { sets: "2", time: "30 s", note: "Elbows under shoulders, chest open" }, poses: [
+        { t: 118, h: 125, rt: -90, rs: -90, lt: -88, ls: -88, ra: 8, rf: 90, la: 10, lf: 90, props: [MAT] }] },
+    { id: "reverse-tabletop", name: "Reverse tabletop", cat: "Yoga", def: { sets: "2", time: "30 s", note: "Hips high, shoulders over the wrists" }, poses: [
+        { t: -94, h: -112, rt: 66, rs: 0, lt: 64, ls: 2, ra: 0, rf: 0, la: 2, lf: 2, props: [MAT] }] },
+    { id: "legs-up-wall", name: "Legs up the wall", cat: "Yoga", def: { sets: "1", time: "3 min", note: "Relax the arms, breathe slowly" }, poses: [
+        { t: -90, h: -90, rt: 178, rs: 178, lt: 176, ls: 176, ra: 95, rf: 95, la: 93, lf: 93, props: [MAT, { k: "wall", ox: 8 }] }] },
+    { id: "vinyasa-flow", name: "Vinyasa flow", cat: "Yoga", def: { sets: "2", reps: "5", note: "Chaturanga, up dog, down dog" }, poses: [
+        { t: 96, h: 92, rt: -84, rs: -84, lt: -83, ls: -83, ra: -118, rf: 5, la: -120, lf: 6, props: [MAT] },
+        { t: 145, h: 160, rt: -80, rs: -80, lt: -79, ls: -79, ra: 0, rf: 0, la: 2, lf: 2, props: [MAT] },
+        { t: 53, h: 28, rt: -28, rs: -28, lt: -26, ls: -26, ra: 53, rf: 53, la: 51, lf: 51, props: [MAT] }] },
 
     /* ---------- Mobility ---------- */
-    { id: "arm-circles", name: "Arm circles", cat: "Mobility", def: { sets: "2", reps: "10 each way" }, poses: [
+    { id: "arm-circles", name: "Arm circles", cat: "Mobility", def: { sets: "2", reps: "10 each way", note: "Start small, make the circles bigger" }, poses: [
         P(LG.front, { ra: 90, rf: 90, la: -90, lf: -90 }),
         P(LG.front, { ra: 150, rf: 150, la: -150, lf: -150 }),
         P(LG.front, { ra: 35, rf: 35, la: -35, lf: -35 })] },
-    { id: "leg-swings", name: "Leg swings", cat: "Mobility", def: { sets: "2", reps: "10 each leg" }, poses: [
+    { id: "leg-swings", name: "Leg swings", cat: "Mobility", def: { sets: "2", reps: "10 each leg", note: "Hold a wall, swing loose and tall" }, poses: [
         { rt: 55, rs: 55, lt: -3, ls: -3, ra: 40, rf: 40, la: -30, lf: -30 },
         { rt: -40, rs: -40, lt: -3, ls: -3, ra: 40, rf: 40, la: -30, lf: -30 }] },
     { id: "thread-needle", name: "Thread the needle", cat: "Mobility", def: { sets: "2", reps: "8 each side", note: "Slide the arm under, turn the chest" }, poses: [
@@ -2587,6 +2731,19 @@ const LIB_SRC = [
         { t: 62, h: 70, rt: 0, rs: -90, lt: 2, ls: -90, ra: -100, rf: -100, la: 82, lf: 82, props: [MAT] }] },
     { id: "deep-squat", name: "Deep squat hold", cat: "Mobility", def: { sets: "2", time: "30 s", note: "Elbows press the knees out" }, poses: [
         P({ t: 165, h: 170 }, LG.deep, AR.goblet)] },
+    { id: "worlds-greatest", name: "World's greatest stretch", cat: "Mobility", def: { sets: "2", reps: "5 each side", note: "Lunge, hands down, then reach up" }, poses: [
+        { t: 105, h: 120, rt: 85, rs: 0, lt: -57, ls: -57, ra: 5, rf: 5, la: 3, lf: 3 },
+        { t: 125, h: 150, rt: 85, rs: 0, lt: -57, ls: -57, ra: 178, rf: 178, la: 3, lf: 3 }] },
+    { id: "knee-to-wall", name: "Knee-to-wall ankle drill", cat: "Mobility", def: { sets: "2", reps: "10 each side", note: "Heel stays down, knee to the wall" }, poses: [
+        { t: 175, h: 175, rt: 55, rs: -30, lt: -44, ls: -44, ra: 70, rf: 100, la: 68, lf: 98, props: [{ k: "wall", ox: 20 }] }] },
+    { id: "couch-stretch", name: "Couch stretch", cat: "Mobility", def: { sets: "2", time: "45 s each side", note: "Squeeze the glute, ribs down" }, poses: [
+        { t: 178, h: 178, rt: 85, rs: 0, lt: -30, ls: -165, ra: 40, rf: 90, la: 38, lf: 88, props: [{ k: "wall", ox: -19 }] }] },
+    { id: "knee-hug-walk", name: "Walking knee hug", cat: "Mobility", def: { sets: "2", reps: "8 each side", note: "Stand tall, hug the knee up" }, poses: [
+        P(LG.stand, AR.down),
+        { t: 178, h: 178, rt: 118, rs: 8, lt: -3, ls: -3, ra: 15, rf: 65, la: 13, lf: 63 }] },
+    { id: "wall-hip-hinge", name: "Wall hip hinge", cat: "Mobility", def: { sets: "2", reps: "10", note: "Hips back to touch the wall" }, poses: [
+        { t: 180, h: 178, rt: 3, rs: 3, lt: -3, ls: -3, ra: -28, rf: 60, la: -30, lf: 58, props: [{ k: "wall", ox: -8 }] },
+        { t: 110, h: 135, rt: 28, rs: -8, lt: 24, ls: -10, ra: -28, rf: 60, la: -30, lf: 58, props: [{ k: "wall", ox: -8 }] }] },
 ];
 
 function buildLib() {
@@ -2668,8 +2825,10 @@ function drawScene(g, o, s, f) {
         svgEl("circle", { class: "ln thin", cx: o.x, cy: o.y - 8, r: 5 }, g);
         svgEl("circle", { class: "solid", cx: o.x, cy: o.y, r: 7 }, g);
     } else if (o.k === "wall") {
+        /* the hatching goes on the far side of the wall, away from the figure */
+        const d = o.x >= s.hip[0] ? 1 : -1;
         svgEl("line", { class: "ln", x1: o.x, y1: 12, x2: o.x, y2: GROUND }, g);
-        for (let yy = 20; yy < GROUND; yy += 12) svgEl("line", { class: "ln thin", x1: o.x - 7, y1: yy + 7, x2: o.x, y2: yy }, g);
+        for (let yy = 20; yy < GROUND; yy += 12) svgEl("line", { class: "ln thin", x1: o.x + d * 7, y1: yy + 7, x2: o.x, y2: yy }, g);
     }
 }
 
@@ -3050,8 +3209,8 @@ function renderLib() {
 function stats(p) {
     const out = [], sets = p.sets.trim(), reps = p.reps.trim();
     if (sets && reps) out.push([sets + " x " + reps, true]);
-    else if (reps) out.push([reps + " reps", true]);
-    else if (sets) out.push([sets + " sets", true]);
+    else if (reps) out.push([/^\d+$/.test(reps) ? reps + " reps" : reps, true]);
+    else if (sets) out.push([sets + (sets === "1" ? " set" : " sets"), true]);
     if (p.time.trim()) out.push([p.time.trim(), !out.length]);
     if (p.weight.trim()) out.push([p.weight.trim(), false]);
     if (p.rest.trim()) out.push(["rest " + p.rest.trim(), false]);
